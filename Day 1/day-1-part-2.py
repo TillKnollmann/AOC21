@@ -1,14 +1,12 @@
 with open("Day 1/input.txt", "r") as file:
+    window_size = 3
     lines = file.readlines()
-    measure = [int(lines[0]), int(lines[1]), int(lines[2])]
-    measure_sum = sum(measure)
+    measure = -1
     increase = 0
-    for i in range(3, len(lines)):
+    for i in range(0, len(lines)-window_size):
         # get new measure
-        measure_new = [measure[1], measure[2], int(lines[i])]
-        measure_new_sum = sum(measure_new)
-        if (measure_new_sum > measure_sum):
+        measure = int(lines[i])
+        measure_new = int(lines[i + window_size])
+        if (measure_new > measure):
             increase += 1
-        measure = measure_new
-        measure_sum = measure_new_sum
     print(increase)
