@@ -1,9 +1,10 @@
-with open("Day 1/input.txt", "r") as file:
-    increases = 0
-    lastValue = -1
-    for line in file.readlines():
-        currentValue = int(line)
-        if lastValue != -1 and lastValue < currentValue:
-            increases += 1
-        lastValue = currentValue
-    print(increases)
+import numpy as np
+
+values = np.loadtxt("Day 1/input.txt")
+
+increases = 0
+
+for i in range(0, len(values)-1):
+    if values[i] < values[i+1]:
+        increases += 1
+print(increases)

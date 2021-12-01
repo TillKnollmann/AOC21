@@ -1,12 +1,10 @@
-with open("Day 1/input.txt", "r") as file:
-    window_size = 3
-    lines = file.readlines()
-    measure = -1
-    increase = 0
-    for i in range(0, len(lines)-window_size):
-        # get new measure
-        measure = int(lines[i])
-        measure_new = int(lines[i + window_size])
-        if (measure_new > measure):
-            increase += 1
-    print(increase)
+import numpy as np
+
+values = np.loadtxt("Day 1/input.txt")
+
+window_size = 3
+increase = 0
+for i in range(0, len(values) - window_size):
+    if (values[i + window_size] > values[i]):
+        increase += 1
+print(increase)
