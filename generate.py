@@ -3,7 +3,7 @@ import shutil
 
 def getTemplateCode(day):
     result = 'import numpy as np\nimport time\n\n'
-    result += 'path = "Day' + str(day) + '/input-text.txt"\n\n'
+    result += 'path = "Day ' + str(day) + '/input-test.txt"\n\n'
     result += 'with open(path, "r") as file:\n'
     result += '\tstartTime = time.time()\n'
     result += '\tlines = file.readlines()\n'

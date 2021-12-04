@@ -1,7 +1,7 @@
 import numpy as np
 import time
 
-path = "Day12/input-text.txt"
+path = "Day 12/input-test.txt"
 
 with open(path, "r") as file:
 	startTime = time.time()
