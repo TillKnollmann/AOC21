@@ -1,6 +1,7 @@
 from os import sep
 import numpy as np
 import re
+import time
 
 def getBoardFromStringArray(string_array):
     result = []
@@ -13,7 +14,9 @@ def processBoard(board, number):
     board[board == number] = -1
     return board
 
-def checkBoard(board):
+def checkBoard(board, upper):
+    if len(board[board==upper]) > 0:
+        return False
     if len(board[board==-1]) < 5:
         return False
     else:
@@ -27,13 +30,13 @@ def invalidateBoard(board, value):
     return board
 
 def calculateScore(board, last_number):
-    print(board)
     board_sum = sum(board[board>=0])
-    print("Last Number: " + str(last_number) + " Sum: " + str(board_sum))
     return last_number * board_sum
 
 
 with open("Day 4/input.txt", "r") as file:
+    startTime = time.time()
+
     lines = file.readlines()
 
     random_numbers = np.array(lines[0].replace('\n', '').split(sep=","), dtype=np.int32)
@@ -58,9 +61,12 @@ with open("Day 4/input.txt", "r") as file:
     while i < len(random_numbers) and not won:
         for board in boards:
             board = processBoard(board, random_numbers[i])
-            if (checkBoard(board)):
+            if (checkBoard(board, upperbound)):
                 last_win_board = board.copy()
                 last_win_score = calculateScore(board, random_numbers[i])
                 board = invalidateBoard(board, upperbound)
         i += 1
     print("\nThe last win board is:\n" + str(last_win_board) + "\nWith score: " + str(last_win_score))
+
+    executionTime = round(time.time() - startTime, 2)
+    print('\nExecution time in seconds: ' + str(executionTime))
