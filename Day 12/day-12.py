@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import pprint
+from joblib import Parallel, delayed
 
 from itertools import chain, combinations, permutations
 
@@ -39,6 +40,56 @@ def generateNewPath(path: tuple, pos: int, toInsert: tuple) -> tuple:
     result += toInsert
     result += path[pos + 1 : len(path)]
     return tuple(result)
+
+
+def generatePathsByNeighbors(j, paths_new, part_2, G, allowed):
+    path = paths_new[j]
+    result = {""}
+    result.clear()
+    for i in range(0, len(paths_new[j])):
+        if str.isupper(path[i]) or (
+            part_2 and str(path[i]) != "start" and str(path[i]) != "end"
+        ):
+            node = path[i]
+
+            # get all simple neighbors not start or end
+            neighbors = list(G.neighbors(node))
+            neighbors = removeFromList(neighbors, "start")
+            neighbors = removeFromList(neighbors, "end")
+            # generate possibilities
+            ps = list(powerset(neighbors))
+            for set in ps:
+                for perm in permutations(list(set)):
+                    insert = []
+                    for elem in list(perm):
+                        insert.append(elem)
+                        insert.append(node)
+                    generated = generateNewPath(path, i, tuple(insert))
+                    if isValid(generated, G.nodes(), allowed):
+                        result.add(generated)
+    return result
+
+
+def generatePathsByCycles(j, paths_new, part_2, G, cycles_nice, allowed):
+    path = paths_new[j]
+    result = {""}
+    result.clear()
+    # build in cycles
+    for i in range(0, len(path)):
+        if str.isupper(path[i]) or (
+            part_2 and str(path[i]) != "start" and str(path[i]) != "end"
+        ):
+            node = path[i]
+            # get all cycles
+            current_cycles = cycles_nice[str(node)]
+            # generate path for each cycle
+            for cycle in current_cycles:
+                insert = list(cycle)
+                insert.append(node)
+                generated = generateNewPath(path, i, tuple(insert))
+                if isValid(generated, G.nodes(), allowed):
+                    result.add(generated)
+    return result
 
 
 def isValid(path: tuple, nodes: list, allowed: int) -> bool:
@@ -100,8 +151,10 @@ def main():
                 if str(node) in cycle:
                     # orient cycle
                     temp2 = cycle
-                    temp2 = tuple(shift(temp2, temp2.index(node)))
-                    temp.add(temp2[1 : len(temp2)])
+                    temp2 = tuple(
+                        shift(temp2, len(temp2) - temp2.index(node))[1 : len(temp2)]
+                    )
+                    temp.add(temp2)
             if len(temp) > 0:
                 cycles_nice[str(node)] = temp
 
@@ -120,45 +173,28 @@ def main():
             generated_paths = {"a"}
             generated_paths.clear()
 
-            for path in paths_new:
-                for i in range(0, len(path)):
-                    if str.isupper(path[i]) or (
-                        part_2 and str(path[i]) != "start" and str(path[i]) != "end"
-                    ):
-                        node = path[i]
+            backend = "multiprocessing"
+            results = Parallel(n_jobs=4, backend=backend)(
+                delayed(generatePathsByNeighbors)(
+                    j, list(paths_new), part_2, G, allowed
+                )
+                for j in range(0, len(paths_new))
+            )
 
-                        # get all simple neighbors not start or end
-                        neighbors = list(G.neighbors(node))
-                        neighbors = removeFromList(neighbors, "start")
-                        neighbors = removeFromList(neighbors, "end")
-                        # generate possibilities
-                        ps = list(powerset(neighbors))
-                        for set in ps:
-                            for perm in permutations(list(set)):
-                                insert = []
-                                for elem in list(perm):
-                                    insert.append(elem)
-                                    insert.append(node)
-                                generated = generateNewPath(path, i, tuple(insert))
-                                if isValid(generated, G.nodes(), allowed):
-                                    generated_paths.add(generated)
+            for result in results:
+                generated_paths.update(result)
 
-            # build in cycles
-            for path in paths_new:
-                for i in range(0, len(path)):
-                    if str.isupper(path[i]) or (
-                        part_2 and str(path[i]) != "start" and str(path[i]) != "end"
-                    ):
-                        node = path[i]
-                        # get all cycles
-                        current_cycles = cycles_nice[str(node)]
-                        # generate path for each cycle
-                        for cycle in current_cycles:
-                            insert = list(cycle)
-                            insert.append(node)
-                            generated = generateNewPath(path, i, tuple(insert))
-                            if isValid(generated, G.nodes(), allowed):
-                                generated_paths.add(generated)
+            # pprint.pprint(generated_paths)
+
+            results = Parallel(n_jobs=4, backend=backend)(
+                delayed(generatePathsByCycles)(
+                    j, list(paths_new), part_2, G, cycles_nice, allowed
+                )
+                for j in range(0, len(paths_new))
+            )
+
+            for result in results:
+                generated_paths.update(result)
 
             if len(generated_paths) > 0:
                 progress = True
