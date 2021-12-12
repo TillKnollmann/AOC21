@@ -8,7 +8,7 @@ from collections import deque
 
 import networkx as nx
 
-file_path = "Day 12/input.txt"
+file_path = "Day 12/input-test.txt"
 
 
 def removeFromList(list, thing):
@@ -123,7 +123,7 @@ def main():
 
         i = 0
 
-        all_paths = paths.copy()
+        all_paths = []
 
         while progress and i < iterations:
             i += 1
@@ -140,8 +140,6 @@ def main():
                         neighbors = list(G.neighbors(node))
                         neighbors = removeFromList(neighbors, "start")
                         neighbors = removeFromList(neighbors, "end")
-                        for node2 in path:
-                            neighbors = removeFromList(neighbors, str(node2))
                         # generate possibilities
                         ps = list(powerset(neighbors))
                         for set in ps:
@@ -166,17 +164,6 @@ def main():
                     if str.isupper(str(node)):
                         # get all cycles
                         current_cycles = cycles_nice[str(node)]
-                        # remove cycles which contain nodes of the path
-                        cycles_temp = []
-                        for cycle in current_cycles:
-                            clean = True
-                            for cycle_node in cycle:
-                                if cycle_node in path:
-                                    if not str.isupper(str(cycle_node)):
-                                        clean = False
-                            if clean:
-                                cycles_temp.append(cycle)
-                        current_cycles = cycles_temp
 
                         # generate path for each cycle
                         for cycle in current_cycles:
@@ -192,48 +179,61 @@ def main():
                                     proposed.append(list(path)[j])
                             generated_paths.append(proposed.copy())
 
-            if len(generated_paths) > 0:
-                progress = True
+            # remove invalid paths
+
+            temp = []
+            for path in generated_paths:
+                no_double_simple = 0
+                for node in G.nodes():
+                    number = list(path).count(str(node))
+                    if number > 1:
+                        if not str.isupper(str(node)):
+                            no_double_simple += number
+                if no_double_simple < 3:
+                    temp.append(path)
+
+            generated_paths = temp.copy()
 
             # check for duplicates
             temp = []
             for path in generated_paths:
                 if not isContained(list(path), list(paths_new)):
                     if not isContained(list(path), temp):
-                        # check if path is valid
-                        use = True
-                        for node in path:
-                            if list(path).count(str(node)) > 1:
-                                if not str.isupper(str(node)):
-                                    use = False
-                        if use:
+                        if not isContained(list(path), all_paths):
                             temp.append(path)
 
-            all_paths += paths_new
+            if len(temp) > 0:
+                progress = True
+
+            all_paths += paths_new.copy()
             paths_new = temp.copy()
+
+            print("\n" + str(len(all_paths)) + " paths")
 
         print("\nIterations:" + str(i))
 
+        pprint.pprint(all_paths)
+
         # remove invalid paths
-        paths_temp = []
-        for path in all_paths:
-            if not isContained(list(path), paths_temp):
-                # check if element comes twice
-                use = True
-                for node in path:
-                    if list(path).count(str(node)) > 1:
-                        if not str.isupper(str(node)):
-                            use = False
-                if use:
-                    paths_temp.append(path)
-        all_paths = paths_temp
+        # paths_temp = []
+        # for path in all_paths:
+        #    if not isContained(list(path), paths_temp):
+        # check if element comes twice
+        #        use = True
+        #        for node in path:
+        #            if list(path).count(str(node)) > 1:
+        #                if not str.isupper(str(node)):
+        #                    use = False
+        #        if use:
+        #            paths_temp.append(path)
+        # all_paths = paths_temp
 
         # for path in paths_new:
         #   print(path)
 
         with open("Day 12/check.txt", "r") as checker:
 
-            check = False
+            check = True
             checker_array = []
             for line in checker.readlines():
                 checker_array.append(line.replace("\n", "").split(","))
@@ -241,10 +241,10 @@ def main():
             # check missing paths
             if check:
                 for check_path in checker_array:
-                    if not check_path in paths_new:
+                    if not check_path in all_paths:
                         print("\nPath " + str(check_path) + " not detected")
 
-            print("\n There are " + str(len(all_paths)) + " paths!")
+            print("\nThere are " + str(len(all_paths)) + " paths!")
 
         executionTime = round(time.time() - startTime, 2)
         print("Execution time in seconds: " + str(executionTime))
