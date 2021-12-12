@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import pprint
+import os
 from joblib import Parallel, delayed
 
 from itertools import chain, combinations, permutations
@@ -40,6 +41,14 @@ def generateNewPath(path: tuple, pos: int, toInsert: tuple) -> tuple:
     result += toInsert
     result += path[pos + 1 : len(path)]
     return tuple(result)
+
+
+def generateParallel(j, paths_new, part_2, G, allowed, cycles_nice, function_call):
+    if function_call == 1:
+        return generatePathsByNeighbors(j, paths_new, part_2, G, allowed)
+    elif function_call == 2:
+        return generatePathsByCycles(j, paths_new, part_2, G, cycles_nice, allowed)
+    return 0
 
 
 def generatePathsByNeighbors(j, paths_new, part_2, G, allowed):
@@ -173,24 +182,15 @@ def main():
             generated_paths = {"a"}
             generated_paths.clear()
 
-            backend = "multiprocessing"
-            results = Parallel(n_jobs=4, backend=backend)(
-                delayed(generatePathsByNeighbors)(
-                    j, list(paths_new), part_2, G, allowed
+            # j, paths_new, part_2, G, allowed, cycles_nice, function_call
+
+            backend = "loky"
+            results = Parallel(n_jobs=os.cpu_count(), backend=backend)(
+                delayed(generateParallel)(
+                    j, list(paths_new), part_2, G, allowed, cycles_nice, f
                 )
                 for j in range(0, len(paths_new))
-            )
-
-            for result in results:
-                generated_paths.update(result)
-
-            # pprint.pprint(generated_paths)
-
-            results = Parallel(n_jobs=4, backend=backend)(
-                delayed(generatePathsByCycles)(
-                    j, list(paths_new), part_2, G, cycles_nice, allowed
-                )
-                for j in range(0, len(paths_new))
+                for f in range(1, 3)
             )
 
             for result in results:
