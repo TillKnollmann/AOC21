@@ -41,8 +41,7 @@ def generateNewPath(path: tuple, pos: int, toInsert: tuple) -> tuple:
     return tuple(result)
 
 
-def isValid(path: tuple, nodes: list) -> bool:
-    allowed = 1
+def isValid(path: tuple, nodes: list, allowed: int) -> bool:
     count = 0
     for node in nodes:
         if not str.isupper(str(node)):
@@ -58,6 +57,13 @@ def main():
     with open(file_path, "r") as file:
         startTime = time.time()
         lines = file.readlines()
+
+        check = False
+        part_2 = True
+
+        allowed = 1
+        if part_2:
+            allowed = 2
 
         G = nx.Graph()  # create a graph
 
@@ -116,7 +122,9 @@ def main():
 
             for path in paths_new:
                 for i in range(0, len(path)):
-                    if str.isupper(path[i]):
+                    if str.isupper(path[i]) or (
+                        part_2 and str(path[i]) != "start" and str(path[i]) != "end"
+                    ):
                         node = path[i]
 
                         # get all simple neighbors not start or end
@@ -132,13 +140,15 @@ def main():
                                     insert.append(elem)
                                     insert.append(node)
                                 generated = generateNewPath(path, i, tuple(insert))
-                                if isValid(generated, G.nodes()):
+                                if isValid(generated, G.nodes(), allowed):
                                     generated_paths.add(generated)
 
             # build in cycles
             for path in paths_new:
                 for i in range(0, len(path)):
-                    if str.isupper(path[i]):
+                    if str.isupper(path[i]) or (
+                        part_2 and str(path[i]) != "start" and str(path[i]) != "end"
+                    ):
                         node = path[i]
                         # get all cycles
                         current_cycles = cycles_nice[str(node)]
@@ -147,7 +157,7 @@ def main():
                             insert = list(cycle)
                             insert.append(node)
                             generated = generateNewPath(path, i, tuple(insert))
-                            if isValid(generated, G.nodes()):
+                            if isValid(generated, G.nodes(), allowed):
                                 generated_paths.add(generated)
 
             if len(generated_paths) > 0:
@@ -158,11 +168,10 @@ def main():
 
             print(str(len(all_paths)) + " paths")
 
-        pprint.pprint(all_paths)
+        # pprint.pprint(all_paths)
 
         with open("Day 12/check.txt", "r") as checker:
 
-            check = False
             checker_array = []
             for line in checker.readlines():
                 checker_array.append(line.replace("\n", "").split(","))
