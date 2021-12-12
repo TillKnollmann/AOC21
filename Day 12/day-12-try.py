@@ -1,18 +1,24 @@
 import numpy as np
 import time
 import pprint
+import sys
 
-file_path = "Day 12/input.txt"
+file_path = "Day 12/input-test.txt"
 
 current_path = []
 simple_paths = []
 visited = {}
 
 
-def dfs(adj_list, start, target):
-    if visited[start]:
+def dfs(adj_list, start, target, visitedTwice):
+    if visited[start] and visitedTwice:
         return
     if not str.isupper(start):
+        if visited[start]:
+            if not (start == "start" or start == "end"):
+                visitedTwice = True
+            else:
+                return
         visited[start] = True
     current_path.append(start)
     if start == target:
@@ -20,14 +26,16 @@ def dfs(adj_list, start, target):
         visited[start] = False
         current_path.pop()
         return
-    for neighbour in adj_list[start]:
-        dfs(adj_list, neighbour, target)
+    for neighbor in adj_list[start]:
+        dfs(adj_list, neighbor, target, visitedTwice)
     current_path.pop()
     visited[start] = False
 
 
 def main():
     with open(file_path, "r") as file:
+
+        sys.setrecursionlimit(sys.getrecursionlimit() * 4)
         startTime = time.time()
         lines = file.readlines()
 
@@ -51,10 +59,22 @@ def main():
             adj_list[edge[0]].append(edge[1])
             adj_list[edge[1]].append(edge[0])
 
-        # pprint.pprint(adj_list)
+        pprint.pprint(adj_list)
 
-        dfs(adj_list, "start", "end")
+        # for part 1
+
+        for node in nodes:
+            visited[node] = False
+        # dfsOld(adj_list, "start", "end")
+        dfs(adj_list, "start", "end", False)
         print(str(len(simple_paths)))
+
+        for node in nodes:
+            visited[node] = False
+
+        # part 2
+        # dfs(adj_list, "start", "end", False)
+        # print(str(len(simple_paths)))
 
         executionTime = round(time.time() - startTime, 2)
         print("Execution time in seconds: " + str(executionTime))
