@@ -1,10 +1,8 @@
 import numpy as np
 import time
-import math
 import pprint
-from itertools import chain, combinations, permutations
 
-from collections import deque
+from itertools import chain, combinations, permutations
 
 import networkx as nx
 
@@ -17,19 +15,12 @@ def removeFromList(list, thing):
     return list
 
 
-def shift(seq, n=0):
+def shift(seq, n):
     a = n % len(seq)
     return seq[-a:] + seq[:-a]
 
 
-def check_same_contents(nums1, nums2):
-    for x in set(nums1 + nums2):
-        if nums1.count(x) != nums2.count(x):
-            return False
-    return True
-
-
-def isContained(listA, listList):
+def isContained(listA: list, listList: list) -> bool:
     for otherList in listList:
         if list(otherList) == list(listA):
             return True
@@ -40,6 +31,27 @@ def powerset(iterable):
     "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
     s = list(iterable)
     return chain.from_iterable(combinations(s, r) for r in range(1, len(s) + 1))
+
+
+def generateNewPath(path: tuple, pos: int, toInsert: tuple) -> tuple:
+    result = []
+    result += path[0 : pos + 1]
+    result += toInsert
+    result += path[pos + 1 : len(path)]
+    return tuple(result)
+
+
+def isValid(path: tuple, nodes: list) -> bool:
+    allowed = 1
+    count = 0
+    for node in nodes:
+        if not str.isupper(str(node)):
+            number = path.count(str(node))
+            if number > 1:
+                count += number
+                if count > allowed:
+                    return False
+    return True
 
 
 def main():
@@ -53,14 +65,17 @@ def main():
             edge = line.replace("\n", "").split("-")
             G.add_edge(edge[0], edge[1])
 
-        paths = list(nx.all_simple_paths(G, source="start", target="end"))
-        paths_new = paths.copy()
+        paths = tuple(nx.all_simple_paths(G, source="start", target="end"))
+
+        temp = []
+        for path in paths:
+            temp.append(tuple(path))
+        paths = tuple(temp)
 
         G_prime = G.copy()
         G_prime.remove_nodes_from(["start", "end"])
 
         # find cycles
-        # cycles = nx.cycle_basis(G_prime)
         cycles = nx.simple_cycles(G_prime.to_directed())
 
         cycles_new = []
@@ -71,71 +86,39 @@ def main():
             cycles_new.append(temp)
         cycles = cycles_new
 
-        # pprint.pprint(list(cycles))
-
-        # print(cycles)
         cycles_nice = {}
         for node in G.nodes():
-            if str.isupper(str(node)):
-                temp = []
-                for cycle in cycles:
-                    if str(node) in cycle:
-                        # orient cycle
-                        temp2 = cycle
-                        while temp2[0] != node:
-                            temp2 = shift(temp2, 1)
-                        if not temp2 in temp:
-                            temp.append(temp2[1 : len(temp2)])
+            temp = {""}
+            temp.clear()
+            for cycle in cycles:
+                if str(node) in cycle:
+                    # orient cycle
+                    temp2 = cycle
+                    temp2 = tuple(shift(temp2, temp2.index(node)))
+                    temp.add(temp2[1 : len(temp2)])
+            if len(temp) > 0:
                 cycles_nice[str(node)] = temp
 
-        # cycles_new = []
-        # for cycle in cycles:
-        #    string_cycle = [str(x) for x in cycle]
-        #    if not "start" in string_cycle:
-        #        if not "end" in string_cycle:
-        #            cycles_new.append(cycle)
-        # temp = cycle.copy()
-        # list.reverse(temp)
-        # cycles_new.append(temp)
-        # cycles = cycles_new
-
-        # pprint.pprint(cycles)
-
-        # cycles_nice = {}
-        # for node in G.nodes():
-        #   if str.isupper(str(node)):
-        #      temp = []
-        #     for cycle in cycles:
-        #        if node in cycle:
-        #           # orient cycle
-        #          temp2 = cycle
-        #         while temp2[0] != node:
-        #            temp2 = shift(temp2, 1)
-        #       temp.append(temp2)
-        # cycles_nice[str(node)] = temp
-
-        # pprint.pprint(cycles_nice)
-
-        # find all paths with movements to neighbors
-
         progress = True
-        iterations = 100
 
-        i = 0
+        paths_new = {"a"}
+        paths_new.clear()
+        paths_new.update(paths)
 
-        all_paths = []
+        all_paths = {""}
+        all_paths.clear()
 
-        while progress and i < iterations:
-            i += 1
+        while progress:
             progress = False
-            current_size = len(paths_new)
 
-            generated_paths = []
+            generated_paths = {"a"}
+            generated_paths.clear()
 
             for path in paths_new:
-                for i in range(0, len(list(path))):
-                    node = list(path)[i]
-                    if str.isupper(str(node)):
+                for i in range(0, len(path)):
+                    if str.isupper(path[i]):
+                        node = path[i]
+
                         # get all simple neighbors not start or end
                         neighbors = list(G.neighbors(node))
                         neighbors = removeFromList(neighbors, "start")
@@ -143,97 +126,43 @@ def main():
                         # generate possibilities
                         ps = list(powerset(neighbors))
                         for set in ps:
-                            # print(list(set))
                             for perm in permutations(list(set)):
-                                # construct new path
-                                proposed = []
-                                for j in range(0, len(list(path))):
-                                    if i != j:
-                                        proposed.append(list(path)[j])
-                                    else:
-                                        proposed.append(list(path)[j])
-                                        for elem in perm:
-                                            proposed.append(elem)
-                                            proposed.append(list(path)[j])
-                                generated_paths.append(proposed.copy())
+                                insert = []
+                                for elem in list(perm):
+                                    insert.append(elem)
+                                    insert.append(node)
+                                generated = generateNewPath(path, i, tuple(insert))
+                                if isValid(generated, G.nodes()):
+                                    generated_paths.add(generated)
 
             # build in cycles
             for path in paths_new:
-                for i in range(0, len(list(path))):
-                    node = list(path)[i]
-                    if str.isupper(str(node)):
+                for i in range(0, len(path)):
+                    if str.isupper(path[i]):
+                        node = path[i]
                         # get all cycles
                         current_cycles = cycles_nice[str(node)]
-
                         # generate path for each cycle
                         for cycle in current_cycles:
-                            # construct new path
-                            proposed = []
-                            for j in range(0, len(list(path))):
-                                if i != j:
-                                    proposed.append(list(path)[j])
-                                else:
-                                    proposed.append(list(path)[j])
-                                    for elem in cycle:
-                                        proposed.append(elem)
-                                    proposed.append(list(path)[j])
-                            generated_paths.append(proposed.copy())
+                            insert = list(cycle)
+                            insert.append(node)
+                            generated = generateNewPath(path, i, tuple(insert))
+                            if isValid(generated, G.nodes()):
+                                generated_paths.add(generated)
 
-            # remove invalid paths
-
-            temp = []
-            for path in generated_paths:
-                no_double_simple = 0
-                for node in G.nodes():
-                    number = list(path).count(str(node))
-                    if number > 1:
-                        if not str.isupper(str(node)):
-                            no_double_simple += number
-                if no_double_simple < 3:
-                    temp.append(path)
-
-            generated_paths = temp.copy()
-
-            # check for duplicates
-            temp = []
-            for path in generated_paths:
-                if not isContained(list(path), list(paths_new)):
-                    if not isContained(list(path), temp):
-                        if not isContained(list(path), all_paths):
-                            temp.append(path)
-
-            if len(temp) > 0:
+            if len(generated_paths) > 0:
                 progress = True
 
-            all_paths += paths_new.copy()
-            paths_new = temp.copy()
+            all_paths.update(paths_new.copy())
+            paths_new = generated_paths.copy()
 
-            print("\n" + str(len(all_paths)) + " paths")
-
-        print("\nIterations:" + str(i))
+            print(str(len(all_paths)) + " paths")
 
         pprint.pprint(all_paths)
 
-        # remove invalid paths
-        # paths_temp = []
-        # for path in all_paths:
-        #    if not isContained(list(path), paths_temp):
-        # check if element comes twice
-        #        use = True
-        #        for node in path:
-        #            if list(path).count(str(node)) > 1:
-        #                if not str.isupper(str(node)):
-        #                    use = False
-        #        if use:
-        #            paths_temp.append(path)
-        # all_paths = paths_temp
-
-        # for path in paths_new:
-        #   print(path)
-
         with open("Day 12/check.txt", "r") as checker:
 
-            check = True
+            check = False
             checker_array = []
             for line in checker.readlines():
                 checker_array.append(line.replace("\n", "").split(","))
