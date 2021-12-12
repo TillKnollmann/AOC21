@@ -9,7 +9,7 @@ from itertools import chain, combinations, permutations
 
 import networkx as nx
 
-file_path = "Day 12/input-test.txt"
+file_path = "Day 12/input.txt"
 
 
 def removeFromList(list, thing):
@@ -56,27 +56,28 @@ def generatePathsByNeighbors(j, paths_new, part_2, G, allowed):
     path = paths_new[j]
     result = {""}
     result.clear()
-    for i in range(0, len(paths_new[j])):
-        if str.isupper(path[i]) or (
-            part_2 and str(path[i]) != "start" and str(path[i]) != "end"
-        ):
-            node = path[i]
+    if not part_2:
+        for i in range(0, len(paths_new[j])):
+            if str.isupper(path[i]) or (
+                part_2 and str(path[i]) != "start" and str(path[i]) != "end"
+            ):
+                node = path[i]
 
-            # get all simple neighbors not start or end
-            neighbors = list(G.neighbors(node))
-            neighbors = removeFromList(neighbors, "start")
-            neighbors = removeFromList(neighbors, "end")
-            # generate possibilities
-            ps = list(powerset(neighbors))
-            for set in ps:
-                for perm in permutations(list(set)):
-                    insert = []
-                    for elem in list(perm):
-                        insert.append(elem)
-                        insert.append(node)
-                    generated = generateNewPath(path, i, tuple(insert))
-                    if isValid(generated, G.nodes(), allowed):
-                        result.add(generated)
+                # get all simple neighbors not start or end
+                neighbors = list(G.neighbors(node))
+                neighbors = removeFromList(neighbors, "start")
+                neighbors = removeFromList(neighbors, "end")
+                # generate possibilities
+                ps = list(powerset(neighbors))
+                for set in ps:
+                    for perm in permutations(list(set)):
+                        insert = []
+                        for elem in list(perm):
+                            insert.append(elem)
+                            insert.append(node)
+                        generated = generateNewPath(path, i, tuple(insert))
+                        if isValid(generated, G.nodes(), allowed):
+                            result.add(generated)
     return result
 
 
@@ -120,7 +121,7 @@ def main():
         lines = file.readlines()
 
         check = False
-        part_2 = True
+        part_2 = False
 
         allowed = 1
         if part_2:
@@ -181,7 +182,9 @@ def main():
 
         i = 0
 
-        while progress:
+        solution_part_1 = 0
+
+        while progress or part_2:
             progress = False
 
             i += 1
@@ -222,6 +225,35 @@ def main():
                 + " paths"
             )
 
+            solution_part_1 = len(all_paths)
+
+            if part_2 and not progress:
+                part_2 = False
+                progress = False
+                solution_part_2 = len(all_paths)
+                print("\nSolution Part 2: " + str(solution_part_2))
+            elif not progress:
+                print("\nSolution Part 1: " + str(solution_part_1))
+                part_2 = True
+                allowed = 2
+                paths_new = all_paths.copy()
+                # remove cycles with more than one lower case element
+                temp = {}
+                for node in cycles_nice:
+                    cycles = cycles_nice[node]
+                    new_cycles = []
+                    for cycle in cycles:
+                        count = 0
+                        for graph_node in G.nodes():
+                            if not str.isupper(str(graph_node)):
+                                number = list(cycle).count(str(graph_node))
+                                if number > 1:
+                                    count += number
+                        if count <= allowed:
+                            new_cycles.append(cycle)
+                    temp[node] = list(new_cycles).copy()
+                cycles_nice = temp.copy()
+
         # pprint.pprint(all_paths)
 
         with open("Day 12/check.txt", "r") as checker:
@@ -236,7 +268,7 @@ def main():
                     if not check_path in all_paths:
                         print("\nPath " + str(check_path) + " not detected")
 
-            print("\nThere are " + str(len(all_paths)) + " paths!")
+            print("\nSolution Part 2 " + str(solution_part_2))
 
         executionTime = round(time.time() - startTime, 2)
         print("Execution time in seconds: " + str(executionTime))
