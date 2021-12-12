@@ -3,6 +3,7 @@ import time
 import pprint
 import os
 from joblib import Parallel, delayed
+from tqdm import tqdm
 
 from itertools import chain, combinations, permutations
 
@@ -176,8 +177,20 @@ def main():
         all_paths = {""}
         all_paths.clear()
 
+        print("Detected " + str(os.cpu_count()) + " CPUs")
+
+        i = 0
+
         while progress:
             progress = False
+
+            i += 1
+            print(
+                "\n"
+                + str(round(time.time() - startTime, 2))
+                + " s - Starting round "
+                + str(i)
+            )
 
             generated_paths = {"a"}
             generated_paths.clear()
@@ -189,7 +202,7 @@ def main():
                 delayed(generateParallel)(
                     j, list(paths_new), part_2, G, allowed, cycles_nice, f
                 )
-                for j in range(0, len(paths_new))
+                for j in tqdm(range(0, len(paths_new)))
                 for f in range(1, 3)
             )
 
@@ -202,7 +215,12 @@ def main():
             all_paths.update(paths_new.copy())
             paths_new = generated_paths.copy()
 
-            print(str(len(all_paths)) + " paths")
+            print(
+                str(round(time.time() - startTime, 2))
+                + " s - Found "
+                + str(len(all_paths))
+                + " paths"
+            )
 
         # pprint.pprint(all_paths)
 
