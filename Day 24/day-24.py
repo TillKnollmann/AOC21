@@ -1,19 +1,20 @@
 import numpy as np
 import time
+import ppprint
 
 path = "Day 24/input-test.txt"
 
 def main():
-	with open(path, "r") as file:
-		startTime = time.time()
-		lines = file.readlines()
+    with open(path, "r") as file:
+        startTime = time.time()
+        lines = file.readlines()
 
-		for line in lines:
-			break
+        for line in lines:
+            break
 
-		print(" ")
-		executionTime = round(time.time() - startTime, 2)
-		print("Execution time in seconds: " + str(executionTime))
+        print(" ")
+        executionTime = round(time.time() - startTime, 2)
+        print("Execution time in seconds: " + str(executionTime))
 
 if __name__ == "__main__":
 	main()

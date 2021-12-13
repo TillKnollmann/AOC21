@@ -1,21 +1,24 @@
 import os
 import shutil
 
+tab = "    "
+
+
 def getTemplateCode(day):
-    result = 'import numpy as np\nimport time\n\n'
+    result = "import numpy as np\nimport time\nimport ppprint\n\n"
     result += 'path = "Day ' + str(day) + '/input-test.txt"\n\n'
-    result += 'def main():\n'
-    result += '\twith open(path, "r") as file:\n'
-    result += '\t\tstartTime = time.time()\n'
-    result += '\t\tlines = file.readlines()\n'
-    result += '\n\t\tfor line in lines:\n'
-    result += "\t\t\tbreak\n\n"
-    result += '\t\tprint(" ")\n'
-    result += '\t\texecutionTime = round(time.time() - startTime, 2)\n'
-    result += '\t\tprint("Execution time in seconds: " + str(executionTime))'
+    result += "def main():\n"
+    result += tab + 'with open(path, "r") as file:\n'
+    result += tab + tab + "startTime = time.time()\n"
+    result += tab + tab + "lines = file.readlines()\n"
+    result += "\n" + tab + tab + "for line in lines:\n"
+    result += tab + tab + tab + "break\n\n"
+    result += tab + tab + 'print(" ")\n'
+    result += tab + tab + "executionTime = round(time.time() - startTime, 2)\n"
+    result += tab + tab + 'print("Execution time in seconds: " + str(executionTime))'
     result += '\n\nif __name__ == "__main__":\n\tmain()'
     return result
-    
+
 
 def main():
     path = os.getcwd()
@@ -25,9 +28,12 @@ def main():
         if not os.path.exists(current_path):
             shutil.copytree(template_path, current_path)
             day_name = "day-" + str(i) + ".py"
-            os.rename(str(current_path) + "\\template.py", str(current_path) + "\\" + day_name )
+            os.rename(
+                str(current_path) + "\\template.py", str(current_path) + "\\" + day_name
+            )
             with open(current_path + "\\" + day_name, "w") as file:
                 file.write(getTemplateCode(i))
+
 
 if __name__ == "__main__":
     main()
