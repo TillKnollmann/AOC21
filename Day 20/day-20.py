@@ -1,6 +1,6 @@
 import numpy as np
 import time
-import ppprint
+import pprint
 
 path = "Day 20/input-test.txt"
 

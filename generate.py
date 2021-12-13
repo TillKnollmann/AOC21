@@ -5,7 +5,7 @@ tab = "    "
 
 
 def getTemplateCode(day):
-    result = "import numpy as np\nimport time\nimport ppprint\n\n"
+    result = "import numpy as np\nimport time\nimport pprint\n\n"
     result += 'path = "Day ' + str(day) + '/input-test.txt"\n\n'
     result += "def main():\n"
     result += tab + 'with open(path, "r") as file:\n'
