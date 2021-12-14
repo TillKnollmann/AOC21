@@ -14,9 +14,17 @@ day = 20
 path = ""
 
 
+def parseInput(input):
+    result = None
+
+    return result
+
+
 def part1(data, measure):
     startTime = time.time()
     result_1 = None
+
+    input = parseInput(data)
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
@@ -27,6 +35,8 @@ def part1(data, measure):
 def part2(data, measure):
     startTime = time.time()
     result_2 = None
+
+    input = parseInput(data)
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
@@ -64,12 +74,11 @@ def main():
     global path
     path = "Day " + str(day) + "/"
 
-    # enter test solutions here
-    test_sol = [1588, 2188189693529]
+    test_sol = []  # todo
 
     test = True
-    sol1 = True
-    sol2 = True
+    sol1 = False  # todo
+    sol2 = False  # todo
 
     if test:
         runTests(test_sol, path)
