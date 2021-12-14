@@ -31,8 +31,14 @@ def main():
             os.rename(
                 str(current_path) + "\\template.py", str(current_path) + "\\" + day_name
             )
+            file_data = ""
+            with open(current_path + "\\" + day_name, "r") as file:
+                file_data = file.read()
+            file_data = file_data.replace("DAY", str(i))
             with open(current_path + "\\" + day_name, "w") as file:
-                file.write(getTemplateCode(i))
+                file.write(file_data)
+            # with open(current_path + "\\" + day_name, "w") as file:
+            # file.write(getTemplateCode(i))
 
 
 if __name__ == "__main__":
