@@ -2,6 +2,7 @@ from datetime import date
 import numpy as np
 import time
 import pprint
+import math
 
 from importlib.machinery import SourceFileLoader
 
@@ -24,9 +25,7 @@ def parseInput(data):
 
     for i in range(2, len(data)):
         temp = data[i].split("->")
-        if not temp[0].strip() in mapping:
-            mapping[temp[0].strip()] = []
-        mapping[temp[0].strip()].append(temp[1].strip())
+        mapping[temp[0].strip()] = temp[1].strip()
 
     result.append(mapping)
 
@@ -39,7 +38,7 @@ def processData(input_string, mapping):
         try:
             result += input_string[i]
             to_add = mapping["" + input_string[i] + input_string[i + 1]]
-            result += to_add[0]
+            result += to_add
         except KeyError:
             lol = ""
     result += input_string[len(input_string) - 1]
@@ -47,53 +46,71 @@ def processData(input_string, mapping):
     return result
 
 
+def processDataFast(current_res, mapping):
+    new_dict = {}
+
+    for entry in current_res:
+        if entry in mapping:
+            new_entry_1 = str(entry)[0] + str(mapping[entry])
+            new_entry_2 = str(mapping[entry]) + str(entry)[1]
+            if not new_entry_1 in new_dict:
+                new_dict[new_entry_1] = 0
+            if not new_entry_2 in new_dict:
+                new_dict[new_entry_2] = 0
+            new_dict[new_entry_1] += current_res[entry]
+            new_dict[new_entry_2] += current_res[entry]
+
+    return new_dict.copy()
+
+
 def part1(data, measure):
-    startTime = time.time()
-    result_1 = None
-
-    input = parseInput(data)
-
-    current_string = input[0]
-
-    for i in range(0, 10):
-        current_string = processData(current_string, input[1])
-
-    char_array = [current_string[i] for i in range(0, len(current_string))]
-
-    result = np.unique(np.array(char_array), return_counts=True)
-
-    result_1 = max(result[1]) - min(result[1])
-
-    # print(input[0])
-    # print(input[1])
-
-    executionTime = round(time.time() - startTime, 2)
-    if measure:
-        print("Part 1 took: " + str(executionTime) + " seconds\n")
-    return result_1
+    return processIterations(data, measure, 10)
 
 
 def part2(data, measure):
-    startTime = time.time()
-    result_2 = None
+    return processIterations(data, measure, 40)
 
+
+def processIterations(data, measure, iterations):
     input = parseInput(data)
 
     current_string = input[0]
 
-    for i in range(0, 10):
-        current_string = processData(current_string, input[1])
+    mapping = input[1]
 
-    char_array = [current_string[i] for i in range(0, len(current_string))]
+    count = {}
 
-    result = np.unique(np.array(char_array), return_counts=True)
+    for i in range(0, len(current_string) - 1):
+        entry = current_string[i] + current_string[i + 1]
+        if not entry in count:
+            count[entry] = 1
+        else:
+            count[entry] += 1
 
-    result_2 = max(result[1]) - min(result[1])
+    current_res = count
 
-    executionTime = round(time.time() - startTime, 2)
-    if measure:
-        print("Part 2 took: " + str(executionTime) + " seconds\n")
-    return result_2
+    for i in range(0, iterations):
+        current_res = processDataFast(current_res, mapping)
+
+    count_result = {}
+
+    for entry in current_res:
+        if not str(entry)[0] in count_result:
+            count_result[str(entry)[0]] = 0
+        if not str(entry)[1] in count_result:
+            count_result[str(entry)[1]] = 0
+        count_result[str(entry)[0]] += current_res[entry]
+        count_result[str(entry)[1]] += current_res[entry]
+
+    for entry in count_result:
+        count_result[entry] = math.ceil(count_result[entry] / 2.0)
+
+    return (
+        count_result[max(count_result.keys(), key=(lambda new_k: count_result[new_k]))]
+        - count_result[
+            min(count_result.keys(), key=(lambda new_k: count_result[new_k]))
+        ]
+    )
 
 
 def runTests(test_sol, path):
@@ -121,26 +138,32 @@ def runTests(test_sol, path):
             )
         print(output)
 
-    print("\n")
-
 
 def main():
-
     global path
     path = "Day " + str(day) + "/"
 
     # enter test solutions here
     test_sol = [1588, 2188189693529]
 
-    # runTests(test_sol, path)
+    test = True
+    sol1 = True
+    sol2 = True
+
+    if test:
+        runTests(test_sol, path)
 
     data_main = get_data(day=day, year=2021).splitlines()
 
-    # result_1 = part1(data_main, True)
-    result_2 = part2(data_main, True)
+    if sol1:
+        result_1 = part1(data_main, True)
+        print("Result Part 1: " + str(result_1))
 
-    # print("\nResult Part 1: " + str(result_1))
-    print("\nResult Part 2: " + str(result_2))
+    if sol2:
+        result_2 = part2(data_main, True)
+        print("Result Part 2: " + str(result_2))
+
+    print("\n")
 
     # submit(result_1, part="a", day=day, year=2021)
     # submit(result_2, part="b", day=day, year=2021)

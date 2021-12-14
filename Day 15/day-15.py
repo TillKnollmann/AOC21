@@ -37,10 +37,13 @@ def part2(data, measure):
 def runTests(test_sol, path):
     test_res = []
 
+    paths = lib.getTestPaths(path)
+
     # run tests
-    for path in lib.getTestPaths(path):
+    for path in paths:
         test_res.append(part1(lib.getDataLines(path), False))
-    for path in lib.getTestPaths(path):
+
+    for path in paths:
         test_res.append(part2(lib.getDataLines(path), False))
 
     for i in range(0, len(test_sol)):
@@ -56,26 +59,32 @@ def runTests(test_sol, path):
             )
         print(output)
 
-    print("\n")
-
 
 def main():
-
     global path
     path = "Day " + str(day) + "/"
 
     # enter test solutions here
-    test_sol = []
+    test_sol = [1588, 2188189693529]
 
-    runTests(test_sol, path)
+    test = True
+    sol1 = True
+    sol2 = True
+
+    if test:
+        runTests(test_sol, path)
 
     data_main = get_data(day=day, year=2021).splitlines()
 
-    result_1 = part1(data_main, True)
-    result_2 = part2(data_main, True)
+    if sol1:
+        result_1 = part1(data_main, True)
+        print("Result Part 1: " + str(result_1))
 
-    print("\nResult Part 1: " + str(result_1))
-    print("\nResult Part 2: " + str(result_2))
+    if sol2:
+        result_2 = part2(data_main, True)
+        print("Result Part 2: " + str(result_2))
+
+    print("\n")
 
     # submit(result_1, part="a", day=day, year=2021)
     # submit(result_2, part="b", day=day, year=2021)
