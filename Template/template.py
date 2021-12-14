@@ -64,12 +64,12 @@ def main():
 
     # run tests
     for path in getTestPaths():
-        test_res.append(part1(getDataLines(path)))
+        test_res.append(part1(getDataLines(path), False))
     for path in getTestPaths():
-        test_res.append(part2(getDataLines(path)))
+        test_res.append(part2(getDataLines(path), False))
 
     for i in range(0, len(test_sol)):
-        output = "Check " + str(i)
+        output = "Test " + str(i + 1)
         if test_sol[i] == test_res[i]:
             output += " Success!"
         else:
@@ -80,6 +80,8 @@ def main():
                 + str(test_res[i])
             )
         print(output)
+
+    print("\n")
 
     data_main = get_data(day=day, year=2021).splitlines()
 
