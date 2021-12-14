@@ -1,10 +1,12 @@
 from datetime import date
-from unittest import result
 import numpy as np
 import time
 import pprint
 import os
-import unittest
+
+from importlib.machinery import SourceFileLoader
+
+lib = SourceFileLoader("lib", "lib.py").load_module()
 
 from aocd import get_data
 from aocd import submit
@@ -48,25 +50,6 @@ def printMatrix(matrix):
         for j in range(0, len(output[0])):
             line += str(output[i, j])
         print(line)
-
-
-def getDataLines(path: str) -> list:
-    with open(path, "r") as file:
-        lines = file.readlines()
-    lines = [lines[i].replace("\n", "") for i in range(0, len(lines))]
-    return lines
-
-
-def getTestPaths() -> list:
-    paths = []
-    for root, dirs, files in os.walk(path):
-        # select file name
-        for file in files:
-            # check the extension of files
-            if file.endswith(".txt"):
-                # print whole path of files
-                paths.append(os.path.join(root, file))
-    return paths
 
 
 def part1(data, measure):
@@ -175,21 +158,14 @@ def part2(data, measure):
     return result_2
 
 
-def main():
-
-    global path
-    path = "Day " + str(day) + "/"
-
-    # enter test solutions here
-    test_sol = [17]
-
+def runTests(test_sol, path):
     test_res = []
 
     # run tests
-    for path in getTestPaths():
-        test_res.append(part1(getDataLines(path), False))
-    for path in getTestPaths():
-        test_res.append(part2(getDataLines(path), False))
+    for path in lib.getTestPaths(path):
+        test_res.append(part1(lib.getDataLines(path), False))
+    for path in lib.getTestPaths(path):
+        test_res.append(part2(lib.getDataLines(path), False))
 
     for i in range(0, len(test_sol)):
         output = "Test " + str(i + 1)
@@ -205,6 +181,17 @@ def main():
         print(output)
 
     print("\n")
+
+
+def main():
+
+    global path
+    path = "Day " + str(day) + "/"
+
+    # enter test solutions here
+    test_sol = [17]
+
+    runTests(test_sol, path)
 
     data_main = get_data(day=day, year=2021).splitlines()
 
