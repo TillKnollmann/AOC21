@@ -47,12 +47,16 @@ def processData(input_string, mapping):
 
 
 def processDataFast(current_res, mapping):
+    # new pairs will be here
     new_dict = {}
 
     for entry in current_res:
         if entry in mapping:
+            # get the first new pair
             new_entry_1 = str(entry)[0] + str(mapping[entry])
+            # get the second new pair
             new_entry_2 = str(mapping[entry]) + str(entry)[1]
+            # count both new pairs in new_dict
             if not new_entry_1 in new_dict:
                 new_dict[new_entry_1] = 0
             if not new_entry_2 in new_dict:
@@ -64,22 +68,29 @@ def processDataFast(current_res, mapping):
 
 
 def part1(data, measure):
+    # run for 10 iterations
     return processIterations(data, measure, 10)
 
 
 def part2(data, measure):
+    # run for 40 iterations
     return processIterations(data, measure, 40)
 
 
 def processIterations(data, measure, iterations):
+
+    # parse the data
     input = parseInput(data)
 
+    # initial string
     current_string = input[0]
 
+    # possible replacement rules
     mapping = input[1]
 
     count = {}
 
+    # count the initial pairs
     for i in range(0, len(current_string) - 1):
         entry = current_string[i] + current_string[i + 1]
         if not entry in count:
@@ -90,8 +101,10 @@ def processIterations(data, measure, iterations):
     current_res = count
 
     for i in range(0, iterations):
+        # process all iterations
         current_res = processDataFast(current_res, mapping)
 
+    # count each element
     count_result = {}
 
     for entry in current_res:
@@ -102,9 +115,11 @@ def processIterations(data, measure, iterations):
         count_result[str(entry)[0]] += current_res[entry]
         count_result[str(entry)[1]] += current_res[entry]
 
+    # we overestimate each element by a factor of two
     for entry in count_result:
         count_result[entry] = math.ceil(count_result[entry] / 2.0)
 
+    # count max occurrence and min occurrence
     return (
         count_result[max(count_result.keys(), key=(lambda new_k: count_result[new_k]))]
         - count_result[
