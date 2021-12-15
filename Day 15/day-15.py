@@ -106,18 +106,7 @@ def part2(data, measure):
 
     # print(giant_map_new)
 
-    G = nx.DiGraph()
-
-    for i in range(0, len(giant_map_new)):
-        for j in range(0, len(giant_map_new[0])):
-            if i > 0:
-                G.add_edge((i - 1, j), (i, j), weight=giant_map_new[i - 1, j])
-            if j > 0:
-                G.add_edge((i, j - 1), (i, j), weight=giant_map_new[i, j - 1])
-            if i < len(giant_map_new) - 1:
-                G.add_edge((i + 1, j), (i, j), weight=giant_map_new[i + 1, j])
-            if j < len(giant_map_new[0]) - 1:
-                G.add_edge((i, j + 1), (i, j), weight=giant_map_new[i, j + 1])
+    G = buildGraph(giant_map_new)
 
     path = nx.shortest_path(
         G,
@@ -135,7 +124,19 @@ def part2(data, measure):
 
 
 def buildGraph(map):
-    return None
+    G = nx.DiGraph()
+
+    for i in range(0, len(map)):
+        for j in range(0, len(map[0])):
+            if i > 0:
+                G.add_edge((i - 1, j), (i, j), weight=map[i - 1, j])
+            if j > 0:
+                G.add_edge((i, j - 1), (i, j), weight=map[i, j - 1])
+            if i < len(map) - 1:
+                G.add_edge((i + 1, j), (i, j), weight=map[i + 1, j])
+            if j < len(map[0]) - 1:
+                G.add_edge((i, j + 1), (i, j), weight=map[i, j + 1])
+    return G
 
 
 def part2Old(data, measure):
