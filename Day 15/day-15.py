@@ -192,6 +192,8 @@ def part2Old(data, measure):
 def runTests(test_sol, path):
     test_res = []
 
+    all_check = True
+
     paths = lib.getTestPaths(path)
 
     test_res += list(map(part1, map(lib.getDataLines, paths)))
@@ -199,30 +201,41 @@ def runTests(test_sol, path):
 
     success = [test_sol[i] == test_res[i] for i in range(len(test_sol))]
 
-    for i in range(0, len(test_sol)):
+    for i in range(len(test_sol)):
         output = "Test " + str(i + 1)
         output = (
-            output.join(" Success!")
+            "".join([output, " Success!"])
             if test_sol[i] == test_res[i]
-            else output.join(
-                [" Failed! Expected ", str(test_sol[i]), " received ", str(test_res[i])]
+            else "".join(
+                [
+                    output,
+                    " Failed! Expected ",
+                    str(test_sol[i]),
+                    " received ",
+                    str(test_res[i]),
+                ]
             )
         )
+        all_check = False if test_sol[i] != test_res[i] else all_check
         print(output)
+
+    return all_check
 
 
 def main():
     global path
     path = "Day " + str(day) + "/"
 
-    test_sol = [40, 315]  # todo
+    test_sol = [40, 315]  # Todo put in test solutions
 
-    test = True  # todo
-    sol1 = True  # todo
-    sol2 = True  # todo
+    test = True  # Todo
+
+    sol1 = sub1 = True  # Todo
+    sol2 = sub2 = True  # Todo
 
     if test:
-        runTests(test_sol, path)
+        if not runTests(test_sol, path):
+            sub1 = sub2 = False
 
     data_main = get_data(day=day, year=2021).splitlines()
 
@@ -236,8 +249,11 @@ def main():
 
     print("\n")
 
-    # submit(int(result_1), part="a", day=day, year=2021)
-    # submit(int(result_2), part="b", day=day, year=2021)
+    if sub1:
+        submit(int(result_1), part="a", day=day, year=2021)
+
+    if sub2:
+        submit(int(result_2), part="b", day=day, year=2021)
 
 
 if __name__ == "__main__":

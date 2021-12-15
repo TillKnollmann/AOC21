@@ -62,13 +62,19 @@ def runTests(test_sol, path):
 
     success = [test_sol[i] == test_res[i] for i in range(len(test_sol))]
 
-    for i in range(0, len(test_sol)):
+    for i in range(len(test_sol)):
         output = "Test " + str(i + 1)
         output = (
-            output.join(" Success!")
+            "".join([output, " Success!"])
             if test_sol[i] == test_res[i]
-            else output.join(
-                [" Failed! Expected ", str(test_sol[i]), " received ", str(test_res[i])]
+            else "".join(
+                [
+                    output,
+                    " Failed! Expected ",
+                    str(test_sol[i]),
+                    " received ",
+                    str(test_res[i]),
+                ]
             )
         )
         all_check = False if test_sol[i] != test_res[i] else all_check
@@ -85,12 +91,12 @@ def main():
 
     test = True  # Todo
 
-    sol1, sub1 = False  # Todo
-    sol2, sub2 = False  # Todo
+    sol1 = sub1 = False  # Todo
+    sol2 = sub2 = False  # Todo
 
     if test:
         if not runTests(test_sol, path):
-            sub1, sub2 = False
+            sub1 = sub2 = False
 
     data_main = get_data(day=day, year=2021).splitlines()
 
