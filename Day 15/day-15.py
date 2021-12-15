@@ -51,18 +51,20 @@ def processMap(map):
 
 def part1(data, measure):
     startTime = time.time()
-    result_1 = None
 
     input = parseInput(data)
 
-    shortest = processMap(input)
+    G = buildGraph(input)
 
-    result_1 = shortest[len(shortest) - 1, len(shortest[0]) - 1]
+    path = nx.shortest_path(
+        G, source=(0, 0), target=(len(input) - 1, len(input) - 1), weight="weight",
+    )
+    risk = sum(input[x][y] for x, y in path[1:])
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
         print("Part 1 took: " + str(executionTime) + " seconds\n")
-    return int(result_1)
+    return int(risk)
 
 
 def part2(data, measure):
