@@ -49,7 +49,7 @@ def processMap(map):
     return shortest.copy()
 
 
-def part1(data, measure):
+def part1(data, measure=False):
     startTime = time.time()
 
     input = parseInput(data)
@@ -63,11 +63,11 @@ def part1(data, measure):
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
-        print("Part 1 took: " + str(executionTime) + " seconds\n")
+        print("\nPart 1 took: " + str(executionTime) + " seconds")
     return int(risk)
 
 
-def part2(data, measure):
+def part2(data, measure=False):
     startTime = time.time()
 
     input = parseInput(data)
@@ -120,7 +120,7 @@ def part2(data, measure):
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
-        print("Part 2 took: " + str(executionTime) + " seconds\n")
+        print("\nPart 2 took: " + str(executionTime) + " seconds")
 
     return int(risk)
 
@@ -185,7 +185,7 @@ def part2Old(data, measure):
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
-        print("Part 2 took: " + str(executionTime) + " seconds\n")
+        print("Part 2 took: " + str(executionTime) + " seconds")
     return result_2
 
 
@@ -194,24 +194,20 @@ def runTests(test_sol, path):
 
     paths = lib.getTestPaths(path)
 
-    # run tests
-    for path in paths:
-        test_res.append(part1(lib.getDataLines(path), False))
+    test_res += list(map(part1, map(lib.getDataLines, paths)))
+    test_res += list(map(part2, map(lib.getDataLines, paths)))
 
-    for path in paths:
-        test_res.append(part2(lib.getDataLines(path), False))
+    success = [test_sol[i] == test_res[i] for i in range(len(test_sol))]
 
     for i in range(0, len(test_sol)):
         output = "Test " + str(i + 1)
-        if test_sol[i] == test_res[i]:
-            output += " Success!"
-        else:
-            output += (
-                " Failed! Expected "
-                + str(test_sol[i])
-                + " received "
-                + str(test_res[i])
+        output = (
+            output.join(" Success!")
+            if test_sol[i] == test_res[i]
+            else output.join(
+                [" Failed! Expected ", str(test_sol[i]), " received ", str(test_res[i])]
             )
+        )
         print(output)
 
 
