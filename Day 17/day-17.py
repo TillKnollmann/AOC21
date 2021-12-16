@@ -51,6 +51,15 @@ def part2(data, measure=False):
 
 
 def runTests(test_sol, path):
+    """Runs the test inputs
+
+    Args:
+        test_sol (list): the solutions for the tests in order
+        path (str): folderPath for the test txt files
+
+    Returns:
+        bool: If all tests ran with the correct result
+    """
     test_res = []
 
     all_check = True
