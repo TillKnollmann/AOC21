@@ -4,6 +4,7 @@ import time
 import pprint
 import math
 from functools import reduce
+import functools
 
 from importlib.machinery import SourceFileLoader
 
@@ -45,16 +46,18 @@ def parseBinString(bin_string, outermost=False):
             ]
 
             groups_new = []
+            carry = True
             for i in range(len(groups)):
-                groups_new.append(groups[i][1])
-                if groups[i][0] == "0":
-                    break
+                if carry:
+                    groups_new.append(groups[i][1])
+                    if groups[i][0] == "0":
+                        carry = False
             groups = groups_new
 
             # cut binstring
             bin_string = (
                 bin_string[len(groups) * 5 :]
-                if len(bin_string) > len(groups) * 5 and int(bin_string, 2) != 0
+                if len(bin_string) > len(groups) * 5 and not int(bin_string, 2) == 0
                 else ""
             )
 
@@ -102,6 +105,7 @@ def parseBinString(bin_string, outermost=False):
                 # print("Length " + str(length))
                 bin_string = bin_string[11:]
                 if length == 0:
+                    print("Length 0 requested")
                     return [(packet_version, packet_typeID, ())]
                 else:
                     potential_subpackets = parseBinString(bin_string)
@@ -121,6 +125,7 @@ def parseBinString(bin_string, outermost=False):
                         return [(packet_version, packet_typeID, potential_subpackets)]
     except Exception as e:
         print("Parsing Error!")
+        print(e)
         return
 
 
@@ -158,6 +163,10 @@ def part1(data, measure=False):
     return result_1
 
 
+def prod(*args):
+    return functools.reduce(lambda a, b: a * b, *args)
+
+
 def interpretResultPart2(result):
     # print("Interpreting " + str(result))
     if isinstance(result, list):
@@ -167,60 +176,56 @@ def interpretResultPart2(result):
         # switch over typeID
         packet_version, packet_typeID, packet_value = result
         if packet_typeID == 4:
-            # print("Returning " + str(int(packet_value)))
+            print("Literal " + str(int(packet_value)))
             return [int(packet_value)]
         elif packet_typeID == 0:
             # sum
-            res = sum(interpretResultPart2(packet_value))
-            # print("Sum of " + str(packet_value) + " is " + str(res))
+            res_1 = interpretResultPart2(packet_value)
+            res = sum(res_1)
+            print("Sum of " + str(res_1) + " is " + str(res))
             return flatten_list([res])
         elif packet_typeID == 1:
-            res = reduce((lambda x, y: x * y), interpretResultPart2(packet_value))
-            # print("Prod of " + str(packet_value) + " is " + str(res))
+            res_1 = interpretResultPart2(packet_value)
+            res = prod(res_1) if len(res_1) > 1 else res_1
+            print("Prod of " + str(res_1) + " is " + str(res))
             return flatten_list([res])
         elif packet_typeID == 2:
-            res = min(interpretResultPart2(packet_value))
-            # print("Min of " + str(packet_value) + " is " + str(res))
+            res_1 = interpretResultPart2(packet_value)
+            res = min(res_1)
+            print("Min of " + str(res_1) + " is " + str(res))
             return flatten_list([res])
         elif packet_typeID == 3:
-            res = max(interpretResultPart2(packet_value))
-            # print("Max of " + str(packet_value) + " is " + str(res))
+            res_1 = interpretResultPart2(packet_value)
+            res = max(res_1)
+            print("Max of " + str(res_1) + " is " + str(res))
             return flatten_list([res])
         elif packet_typeID == 5:
-            res = (
-                1
-                if interpretResultPart2(packet_value[0])
-                > interpretResultPart2(packet_value[1])
-                else 0
-            )
-            # print("Greater than of " + str(packet_value) + " is " + str(res))
+            res_1 = [
+                interpretResultPart2(packet_value[0])[0],
+                interpretResultPart2(packet_value[1])[0],
+            ]
+            res = 1 if res_1[0] > res_1[1] else 0
+            print("Greater than of " + str(res_1) + " is " + str(res))
             return flatten_list([res])
         elif packet_typeID == 6:
-            res = (
-                1
-                if interpretResultPart2(packet_value[0])
-                < interpretResultPart2(packet_value[1])
-                else 0
-            )
-            # print("Less than of " + str(packet_value) + " is " + str(res))
+            res_1 = [
+                interpretResultPart2(packet_value[0])[0],
+                interpretResultPart2(packet_value[1])[0],
+            ]
+            res = 1 if res_1[0] < res_1[1] else 0
+            print("Less than of " + str(res_1) + " is " + str(res))
             return flatten_list([res])
         elif packet_typeID == 7:
-            temp1 = interpretResultPart2(packet_value[0])
-            temp2 = interpretResultPart2(packet_value[1])
-            res = 1 if temp1 == temp2 else 0
-            # print(
-            #    "Equal of "
-            #    + str(packet_value)
-            #    + " is "
-            #    + str(res)
-            #    + " "
-            #    + str(temp1)
-            #    + " "
-            #    + str(temp2)
-            # )
+            res_1 = [
+                interpretResultPart2(packet_value[0])[0],
+                interpretResultPart2(packet_value[1])[0],
+            ]
+            res = 1 if res_1[0] == res_1[1] else 0
+            print("Equal of " + str(res_1) + " is " + str(res))
             return flatten_list([res])
 
     else:
+        print("error")
         return 0
 
 
@@ -231,6 +236,8 @@ def part2(data, measure=False):
     input = parseInput(data)
 
     result = parseBinString(input, True)
+
+    # print(str(result))
 
     # print("\nInterpreting " + str(result))
 
@@ -309,8 +316,12 @@ def main():
 
     print(results)
 
-    sol1 = sub1 = False  # Todo
+    sol1 = sub1 = True  # Todo
     sol2 = sub2 = True  # Todo
+
+    sub1 = False
+
+    sub2 = False
 
     if test:
         if not runTests(test_sol, path):
