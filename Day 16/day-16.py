@@ -1,10 +1,7 @@
 from datetime import date
 import time
-import pprint
 import math
-from functools import reduce
 import functools
-import itertools
 
 from importlib.machinery import SourceFileLoader
 
@@ -17,6 +14,7 @@ day = 16
 path = ""
 
 
+# used to deep-flatten a list
 flatten_list = (
     lambda irregular_list: [
         element for item in irregular_list for element in flatten_list(item)
@@ -27,39 +25,46 @@ flatten_list = (
 
 
 def parseInput(input):
+    """ Makes a hexadecimal input a binary with leading zeros """
     return str((bin(int(input[0], base=16))[2:]).zfill(len(input[0]) * 4))
 
 
 def parseBinString(bin_string, outermost=False):
+    """ Parses the binary input """
     if len(bin_string) < 7:
+        # no valid string
         return
     try:
+        # get version and type id
         packet_version = int(bin_string[0:3], 2)
         packet_typeID = int(bin_string[3:6], 2)
+
+        # shorten the string
         bin_string = bin_string[6:]
-        # print("".join(["\n", orig, " ", str(packet_version), " ", str(packet_typeID)]))
 
         if packet_typeID == 4:
-            # literal
+            # find literals
             groups = [
                 (bin_string[i * 5 : i * 5 + 1], bin_string[i * 5 + 1 : i * 5 + 5])
                 for i in range(math.floor(len(bin_string) / 5.0))
             ]
 
             groups_new = []
-
+            # throw away all false groups
             for i in range(len(groups)):
                 groups_new.append(groups[i][1])
                 if groups[i][0] == "0":
                     break
             groups = groups_new
 
-            # cut binstring
+            # cut literals out of binstring
             bin_string = bin_string[len(groups) * 5 :]
 
+            # determine number of literal
             number = int("".join(groups), 2)
 
             if len(bin_string) > 0 and not outermost:
+                # parse the rest of the string and return the concatenation
                 rest = parseBinString(bin_string)
                 return (
                     [(packet_version, packet_typeID, number)] + rest
@@ -67,23 +72,28 @@ def parseBinString(bin_string, outermost=False):
                     else [(packet_version, packet_typeID, number)]
                 )
             else:
+                # return the packet
                 return [(packet_version, packet_typeID, number)]
 
         else:
+            # get length type id
             length_type_ID = bin_string[0]
             bin_string = bin_string[1:]
-            # print("".join(["Length Type ID: ", str(length_type_ID)]))
 
             if length_type_ID == "0":
+                # get length
                 length = int(bin_string[0:15], 2)
-                # print("Length " + str(length))
 
+                # cut the length from the bitstring
                 bin_string = bin_string[15:]
 
+                # get all subpackets
                 sub_packets = parseBinString(bin_string[0:length])
 
+                # cut subpackets out of bitstring
                 bin_string = bin_string[length:]
 
+                # either concatenate the result with the parsing of the rest of the bitstring or return the result if the string ends
                 if len(bin_string) > 0 and not outermost:
                     rest = parseBinString(bin_string)
                     return (
@@ -93,15 +103,19 @@ def parseBinString(bin_string, outermost=False):
                     )
                 else:
                     return [(packet_version, packet_typeID, sub_packets)]
+
             if length_type_ID == "1":
+
+                # get the length
                 length = int(bin_string[0:11], 2)
-                # print("Length " + str(length))
+
+                # cut the length out of the string
                 bin_string = bin_string[11:]
 
+                # get all coming packets
                 potential_subpackets = parseBinString(bin_string)
 
-                # print(str(potential_subpackets))
-
+                # declare length many packets as being from this one and concatenate the rest
                 return [
                     (packet_version, packet_typeID, potential_subpackets[0:length])
                 ] + potential_subpackets[length:]
@@ -113,10 +127,14 @@ def parseBinString(bin_string, outermost=False):
 
 
 def getVersionSum(result):
+    """ Returns the sum of all versions of packets """
     if isinstance(result, list):
+        # Unwrap the list
         return sum(map(getVersionSum, result))
     elif isinstance(result, tuple) and len(result) > 0:
+        # get the current number
         number = result[0]
+        # add numbers of other packets
         if len(result) > 2:
             number += getVersionSum(result[2])
         return number
@@ -125,20 +143,19 @@ def getVersionSum(result):
 
 
 def part1(data, measure=False):
+    """ Solves part 1 of the puzzle """
+
     startTime = time.time()
     result_1 = None
 
+    # parse input
     input = parseInput(data)
 
-    # print("\n\nDecoding " + str(data[0]))
-
+    # create packets
     result = parseBinString(input, True)
 
-    # print(result)
-
+    # evaluate packets
     result_1 = getVersionSum(result)
-
-    # Todo program part 1
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
@@ -147,8 +164,9 @@ def part1(data, measure=False):
 
 
 def interpretResultPart2(result):
-    # print("Interpreting " + str(result))
+    """ Interprets the packets and returns the result """
     if isinstance(result, list):
+        # unwrap the tuples
         if len(result) == 1:
             return interpretResultPart2(result[0])
         else:
@@ -158,85 +176,76 @@ def interpretResultPart2(result):
         # switch over typeID
         packet_version, packet_typeID, packet_value = result
         if packet_typeID == 4:
-            # print("Literal " + str(int(packet_value)))
+            # Literal found
             return [int(packet_value)]
         elif packet_typeID == 0:
-            # sum
-            res_1 = interpretResultPart2(packet_value)
-            res_1.sort()
-            res = sum(res_1)
-            # print("Sum of " + str(res_1) + " is " + str(res))
-            return flatten_list([res])
+            # Sum
+            return flatten_list([sum(interpretResultPart2(packet_value))])
         elif packet_typeID == 1:
-            res_1 = interpretResultPart2(packet_value)
-            res_1.sort()
-            res = (
-                functools.reduce(lambda a, b: a * b, res_1) if len(res_1) > 1 else res_1
+            # Product
+            res = interpretResultPart2(packet_value)
+            return flatten_list(
+                [functools.reduce(lambda a, b: a * b, res) if len(res) > 1 else res]
             )
-            # print("Prod of " + str(res_1) + " is " + str(res))
-            return flatten_list([res])
         elif packet_typeID == 2:
-            res_1 = interpretResultPart2(packet_value)
-            res_1.sort()
-            res = min(res_1)
-            # print("Min of " + str(res_1) + " is " + str(res))
-            return flatten_list([res])
+            # Min
+            return flatten_list([min(interpretResultPart2(packet_value))])
         elif packet_typeID == 3:
-            res_1 = interpretResultPart2(packet_value)
-            res_1.sort()
-            res = max(res_1)
-            # print("Max of " + str(res_1) + " is " + str(res))
-            return flatten_list([res])
+            # Max
+            return flatten_list([max(interpretResultPart2(packet_value))])
         elif packet_typeID == 5:
             if len(packet_value) != 2:
                 raise Exception("ERROR!")
-            res_1 = [
-                interpretResultPart2(packet_value[0])[0],
-                interpretResultPart2(packet_value[1])[0],
-            ]
-            res = int(res_1[0] > res_1[1])
-            # print("Greater than of " + str(res_1) + " is " + str(res))
-            return flatten_list([res])
+            # Greater than
+            return flatten_list(
+                [
+                    int(
+                        interpretResultPart2(packet_value[0])[0]
+                        > interpretResultPart2(packet_value[1])[0]
+                    )
+                ]
+            )
         elif packet_typeID == 6:
             if len(packet_value) != 2:
                 raise Exception("ERROR!")
-            res_1 = [
-                interpretResultPart2(packet_value[0])[0],
-                interpretResultPart2(packet_value[1])[0],
-            ]
-            res = int(res_1[0] < res_1[1])
-            # print("Less than of " + str(res_1) + " is " + str(res))
-            return flatten_list([res])
+            # Less than
+            return flatten_list(
+                [
+                    int(
+                        interpretResultPart2(packet_value[0])[0]
+                        < interpretResultPart2(packet_value[1])[0]
+                    )
+                ]
+            )
         elif packet_typeID == 7:
             if len(packet_value) != 2:
                 raise Exception("ERROR!")
-            res_1 = [
-                interpretResultPart2(packet_value[0])[0],
-                interpretResultPart2(packet_value[1])[0],
-            ]
-            res = int(res_1[0] == res_1[1])
-            # print("Equal of " + str(res_1) + " is " + str(res))
-            return flatten_list([res])
-
+            # Equals
+            return flatten_list(
+                [
+                    int(
+                        interpretResultPart2(packet_value[0])[0]
+                        == interpretResultPart2(packet_value[1])[0]
+                    )
+                ]
+            )
     else:
         print("error")
         return 0
 
 
 def part2(data, measure=False):
+    """ Solves part two of the puzzle """
     startTime = time.time()
     result_2 = 0
 
+    # parse input
     input = parseInput(data)
 
+    # create packages
     result = parseBinString(input, True)
 
-    # print(str(result))
-
-    # print("\n")
-
-    # print("\nInterpreting " + str(result))
-
+    # get result
     result_2 = interpretResultPart2(result)[0]
 
     executionTime = round(time.time() - startTime, 2)
@@ -282,10 +291,12 @@ def main():
     global path
     path = "Day " + str(day) + "/"
 
-    test_sol = [6, 9, 14, 16, 12, 23, 31]  # Todo put in test solutions
+    # test cases for part 1
+    test_sol = [6, 9, 14, 16, 12, 23, 31]
 
-    test = False  # Todo
+    test = True
 
+    # Test part 2
     checks = [3, 54, 7, 9, 1, 0, 0, 1]
 
     results = list(
@@ -308,11 +319,11 @@ def main():
 
     print(results)
 
-    sol1 = sub1 = False  # Todo
+    sol1 = sub1 = True  # Todo
     sol2 = sub2 = True  # Todo
 
     if test:
-        if not runTests(test_sol, path) or len(results[results == 0]) > 0:
+        if not runTests(test_sol, path) or sum(results) < len(results):
             sub1 = sub2 = False
 
     data_main = get_data(day=day, year=2021).splitlines()
