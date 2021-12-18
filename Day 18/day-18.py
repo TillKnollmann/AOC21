@@ -1,14 +1,11 @@
 from datetime import date
 import numpy as np
 import time
-import pprint
 import ast
 import math
-from joblib import Parallel, delayed
-from tqdm import tqdm
-import os
 
-import itertools
+from copy import deepcopy
+
 from importlib.machinery import SourceFileLoader
 
 lib = SourceFileLoader("lib", "lib.py").load_module()
@@ -136,7 +133,7 @@ class SnailFishNumber:
                     + [[value_right, self.content[i][1] + 1]]
                     + self.content[i + 1 :]
                 )
-                self.content = new_list
+                self.content = new_list.copy()
                 break
         if done and print_it:
             print("Result: " + str(self.content))
@@ -151,6 +148,11 @@ class SnailFishNumber:
             if not action_done:
                 action_done = self.split()
 
+    def __copy__(self):
+        res = SnailFishNumber()
+        res.set_content(self.content.copy())
+        return res
+
     def get_magnitude(self) -> int:
         """Returns the magnitude of this snail fish number
 
@@ -161,6 +163,7 @@ class SnailFishNumber:
         # do not work on the acutal data
         mag = self.content.copy()
         while len(mag) > 1:
+            mag_backup = mag.copy()
             find = True
             i = 0
             while find and i < len(mag) - 1:
@@ -171,9 +174,12 @@ class SnailFishNumber:
                         + [[3 * mag[i][0] + 2 * mag[i + 1][0], mag[i][1] - 1]]
                         + mag[i + 2 :]
                     )
-                    mag = list_new
+                    mag = list_new.copy()
                     find = False
                 i = i + 1
+            # print(str(mag))
+            if mag_backup == mag and len(mag) != 1:
+                raise Exception("Error")
         return mag[0][0]
 
 
@@ -190,6 +196,8 @@ def add(num_A: SnailFishNumber, num_B: SnailFishNumber) -> SnailFishNumber:
     Returns:
         SnailFishNumber: The reduced addition of both numbers
     """
+
+    # print("\nAdding " + str(num_A) + " and " + str(num_B))
 
     if not num_A and not num_B:
         raise Exception("Adding two Snail Fish Numbers which are None")
@@ -213,6 +221,8 @@ def add(num_A: SnailFishNumber, num_B: SnailFishNumber) -> SnailFishNumber:
     num = SnailFishNumber()
     num.set_content(res)
     num.reduce()
+
+    # print("Result is " + str(num))
 
     return num
 
@@ -265,9 +275,16 @@ def get_max_magnitude(sf_1: SnailFishNumber, sf_2: SnailFishNumber) -> int:
     Returns:
         int: The maximum magnitude that can be achieved when adding both numbers
     """
-    res_1 = add(sf_1, sf_2)
-    res_2 = add(sf_2, sf_1)
-    return max(res_1.get_magnitude(), res_2.get_magnitude())
+    if sf_1.content == sf_2.content:
+        return 0
+
+    res_1 = add(deepcopy(sf_1), deepcopy(sf_2))
+    res_2 = add(deepcopy(sf_2), deepcopy(sf_1))
+
+    mag_1 = res_1.get_magnitude()
+    mag_2 = res_2.get_magnitude()
+
+    return max(mag_1, mag_2)
 
 
 def part2(data, measure=False):
@@ -276,19 +293,12 @@ def part2(data, measure=False):
 
     input = parseInput(data)
 
-    cart_prod = [input, input]
+    possibilities = [(x, y) for x in input for y in input]
 
-    possibilities = [p for p in itertools.product(*cart_prod)]
-
-    backend = "loky"
-    results = Parallel(n_jobs=int(os.cpu_count()), backend=backend)(
-        delayed(get_max_magnitude)(possibilities[i][0], possibilities[i][1])
-        for i in tqdm(range(len(possibilities)))
-    )
-
-    # matrix = [add(sf_1, sf_2) for sf_1 in input for sf_2 in input if sf_1 != sf_2]
-
-    # magnitudes = [sf.get_magnitude() for sf in results]
+    results = [
+        get_max_magnitude(possibilities[i][0], possibilities[i][1])
+        for i in range(len(possibilities))
+    ]
 
     result_2 = max(results)
 
@@ -339,8 +349,8 @@ def main():
 
     test = True  # Todo
 
-    sol1 = sub1 = False  # Todo
-    sol2 = sub2 = False  # Todo
+    sol1 = sub1 = True  # Todo
+    sol2 = sub2 = True  # Todo
 
     if test:
         if not runTests(test_sol, path):
