@@ -133,7 +133,7 @@ class SnailFishNumber:
                     + [[value_right, self.content[i][1] + 1]]
                     + self.content[i + 1 :]
                 )
-                self.content = new_list.copy()
+                self.content = new_list
                 break
         if done and print_it:
             print("Result: " + str(self.content))
@@ -148,11 +148,6 @@ class SnailFishNumber:
             if not action_done:
                 action_done = self.split()
 
-    def __copy__(self):
-        res = SnailFishNumber()
-        res.set_content(self.content.copy())
-        return res
-
     def get_magnitude(self) -> int:
         """Returns the magnitude of this snail fish number
 
@@ -160,7 +155,7 @@ class SnailFishNumber:
             int: the magnitude
         """
 
-        # do not work on the acutal data
+        # do not work on the actual data
         mag = self.content.copy()
         while len(mag) > 1:
             mag_backup = mag.copy()
@@ -174,10 +169,9 @@ class SnailFishNumber:
                         + [[3 * mag[i][0] + 2 * mag[i + 1][0], mag[i][1] - 1]]
                         + mag[i + 2 :]
                     )
-                    mag = list_new.copy()
+                    mag = list_new
                     find = False
                 i = i + 1
-            # print(str(mag))
             if mag_backup == mag and len(mag) != 1:
                 raise Exception("Error")
         return mag[0][0]
@@ -208,11 +202,11 @@ def add(num_A: SnailFishNumber, num_B: SnailFishNumber) -> SnailFishNumber:
 
     # increase the depth for every element
 
-    list_A = num_A.content.copy()
+    list_A = deepcopy(num_A.content)
     for i in range(len(list_A)):
         list_A[i][1] += 1
 
-    list_B = num_B.content.copy()
+    list_B = deepcopy(num_B.content)
     for i in range(len(list_B)):
         list_B[i][1] += 1
 
@@ -278,8 +272,8 @@ def get_max_magnitude(sf_1: SnailFishNumber, sf_2: SnailFishNumber) -> int:
     if sf_1.content == sf_2.content:
         return 0
 
-    res_1 = add(deepcopy(sf_1), deepcopy(sf_2))
-    res_2 = add(deepcopy(sf_2), deepcopy(sf_1))
+    res_1 = add(sf_1, sf_2)
+    res_2 = add(sf_2, sf_1)
 
     mag_1 = res_1.get_magnitude()
     mag_2 = res_2.get_magnitude()
