@@ -21,11 +21,16 @@ path = ""
 
 
 class SnailFishNumber:
+    """Represents one snail fish number
 
+    """
+
+    # The number in a representation: (element, depth), ...
     content: list
-    levels: list
 
-    def __init__(self):  # constructor method
+    def __init__(self):
+        """Constructor
+        """
         content = []
         levels = []
 
@@ -36,41 +41,53 @@ class SnailFishNumber:
         self.content = content
 
     def set_content_from_string(self, input: str):
+        """sets the content of this object by a string representing a nested list
+
+        Args:
+            input (str): a string representation of a nested list
+        """
+
+        # parse list
         list_input = ast.literal_eval(input)
-        # print(list(list_input))
         self.content = list(self.get_level_elem(list_input))
-        # print(str(self.content))
 
     def __str__(self):
-        # generate list representation
+        # generate string representation
         return str(self.content)
 
     def generate_levels(self):
         self.levels = self.get_level(self.content)
 
-    def get_level_elem(self, l, depth=-1):
+    def get_level_elem(self, l: list, depth=-1) -> list:
+        """Calculates the set of elements in l and returns a list of (element, depth) 
+
+        Args:
+            l ([list]): [description]
+            depth (int, optional): [description]. Defaults to -1.
+
+        Yields:
+            [list]: a list containing the elements and their depths in the order of l
+        """
         if not isinstance(l, list):
             yield [l, depth]
         else:
             for sublist in l:
                 yield from self.get_level_elem(sublist, depth + 1)
 
-    def get_level(self, l, depth=1):
-        isLeaf = True
-        for elem in l:
-            if isinstance(elem, list):
-                isLeaf = False
-                break
-        if isLeaf:
-            yield (l, depth)
-        else:
-            for sublist in l:
-                yield from self.get_level(sublist, depth + 1)
-
     def explode(self, print_it=False) -> bool:
+        """Applies one explode step and returns if explode was applied
+
+        Args:
+            print_it (bool, optional): Whether or not to print debug output. Defaults to False.
+
+        Returns:
+            bool: If an explode step was applied
+        """
+
         if print_it:
             print("\nExploding " + str(self.content))
         done = False
+
         # find list nested at depth 4
         i = 0
         while i < len(self.content) - 1:
@@ -96,6 +113,14 @@ class SnailFishNumber:
         return done
 
     def split(self, print_it=False) -> bool:
+        """Tries to apply a split step. Returns true if one step was applied.
+
+        Args:
+            print_it (bool, optional): Whether or not to print debug output. Defaults to False.
+
+        Returns:
+            bool: If a split step was applied
+        """
         done = False
         if print_it:
             print("\nSplitting " + str(self.content))
@@ -118,21 +143,29 @@ class SnailFishNumber:
         return done
 
     def reduce(self):
+        """Reduced the object by applying as many explode and split steps as possible
+        """
         action_done = True
         while action_done:
             action_done = self.explode()
             if not action_done:
                 action_done = self.split()
 
-    def get_magnitude(self):
+    def get_magnitude(self) -> int:
+        """Returns the magnitude of this snail fish number
+
+        Returns:
+            int: the magnitude
+        """
+
+        # do not work on the acutal data
         mag = self.content.copy()
-        # print(str(mag))
         while len(mag) > 1:
             find = True
             i = 0
             while find and i < len(mag) - 1:
                 if mag[i][1] == mag[i + 1][1]:
-                    # pair found
+                    # pair found -> Merge them
                     list_new = (
                         mag[0:i]
                         + [[3 * mag[i][0] + 2 * mag[i + 1][0], mag[i][1] - 1]]
@@ -145,6 +178,18 @@ class SnailFishNumber:
 
 
 def add(num_A: SnailFishNumber, num_B: SnailFishNumber) -> SnailFishNumber:
+    """Adds two snail fish numbers and returns the reduced result
+
+    Args:
+        num_A (SnailFishNumber): First snail fish number
+        num_B (SnailFishNumber): Second snail fish number
+
+    Raises:
+        Exception: Error if both numbers are None
+
+    Returns:
+        SnailFishNumber: The reduced addition of both numbers
+    """
 
     if not num_A and not num_B:
         raise Exception("Adding two Snail Fish Numbers which are None")
@@ -152,6 +197,8 @@ def add(num_A: SnailFishNumber, num_B: SnailFishNumber) -> SnailFishNumber:
         return num_B
     elif not num_B:
         return num_A
+
+    # increase the depth for every element
 
     list_A = num_A.content.copy()
     for i in range(len(list_A)):
@@ -170,7 +217,15 @@ def add(num_A: SnailFishNumber, num_B: SnailFishNumber) -> SnailFishNumber:
     return num
 
 
-def parseInput(input):
+def parseInput(input: list) -> list:
+    """Parses the input and returns a set of SnailFishNumbers
+
+    Args:
+        input ([list]): A list of string representations of nested lists   
+
+    Returns:
+        list: A list of SnailFishNumbers. One per input element. 
+    """
     result = []
     for value in input:
         sf_num = SnailFishNumber()
@@ -185,12 +240,14 @@ def part1(data, measure=False):
 
     input = parseInput(data)
 
+    # add all snail fish numbers
+
     res = None
     for sf_number in input:
         res = add(res, sf_number)
 
+    # get final magnitude
     result_1 = res.get_magnitude()
-    # print(res.get_magnitude())
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
@@ -199,6 +256,15 @@ def part1(data, measure=False):
 
 
 def get_max_magnitude(sf_1: SnailFishNumber, sf_2: SnailFishNumber) -> int:
+    """Calculates the maximum magnitude when adding sf_1 and sf_2 in any order
+
+    Args:
+        sf_1 (SnailFishNumber): First snail fish number
+        sf_2 (SnailFishNumber): Second snail fish number
+
+    Returns:
+        int: The maximum magnitude that can be achieved when adding both numbers
+    """
     res_1 = add(sf_1, sf_2)
     res_2 = add(sf_2, sf_1)
     return max(res_1.get_magnitude(), res_2.get_magnitude())
