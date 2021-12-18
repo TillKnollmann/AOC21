@@ -4,7 +4,9 @@ import time
 import pprint
 import ast
 import math
-import tqdm
+from joblib import Parallel, delayed
+from tqdm import tqdm
+import os
 
 import itertools
 from importlib.machinery import SourceFileLoader
@@ -70,7 +72,8 @@ class SnailFishNumber:
             print("\nExploding " + str(self.content))
         done = False
         # find list nested at depth 4
-        for i in range(len(self.content) - 1):
+        i = 0
+        while i < len(self.content) - 1:
             if self.content[i][1] == self.content[i + 1][1] and self.content[i][1] >= 4:
                 done = True
                 # depth 4 reached
@@ -84,6 +87,10 @@ class SnailFishNumber:
                 self.content[i][1] = self.content[i][1] - 1
                 del self.content[i + 1]
                 break
+            elif self.content[i][1] == self.content[i + 1][1]:
+                i = i + 2
+            else:
+                i = i + 1
         if done and print_it:
             print("Result: " + str(self.content))
         return done
@@ -191,6 +198,12 @@ def part1(data, measure=False):
     return result_1
 
 
+def get_max_magnitude(sf_1: SnailFishNumber, sf_2: SnailFishNumber) -> int:
+    res_1 = add(sf_1, sf_2)
+    res_2 = add(sf_2, sf_1)
+    return max(res_1.get_magnitude(), res_2.get_magnitude())
+
+
 def part2(data, measure=False):
     startTime = time.time()
     result_2 = None
@@ -201,11 +214,17 @@ def part2(data, measure=False):
 
     possibilities = [p for p in itertools.product(*cart_prod)]
 
-    matrix = [add(sf_1, sf_2) for sf_1 in input for sf_2 in input if sf_1 != sf_2]
+    backend = "loky"
+    results = Parallel(n_jobs=int(os.cpu_count()), backend=backend)(
+        delayed(get_max_magnitude)(possibilities[i][0], possibilities[i][1])
+        for i in tqdm(range(len(possibilities)))
+    )
 
-    magnitudes = [sf.get_magnitude() for sf in matrix]
+    # matrix = [add(sf_1, sf_2) for sf_1 in input for sf_2 in input if sf_1 != sf_2]
 
-    result_2 = max(magnitudes)
+    # magnitudes = [sf.get_magnitude() for sf in results]
+
+    result_2 = max(results)
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
