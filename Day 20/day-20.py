@@ -95,12 +95,10 @@ def apply_img_enh_algo(img_enh_algo: tuple, img: np.array, infty_ext: int) -> np
     infty_ext_new = img_enh_algo[int("".join([str(infty_ext) for i in range(9)]), 2)]
 
     # fill border
-    for i in range(len(res_img)):
-        res_img[i, 0] = infty_ext_new
-        res_img[i, len(res_img) - 1] = infty_ext_new
-    for j in range(len(res_img[0])):
-        res_img[0, j] = infty_ext_new
-        res_img[len(res_img) - 1, j] = infty_ext_new
+    res_img[:, 0] = infty_ext_new
+    res_img[:, len(res_img) - 1] = infty_ext_new
+    res_img[0, :] = infty_ext_new
+    res_img[len(res_img[0]) - 1, :] = infty_ext_new
 
     return res_img, infty_ext_new
 
