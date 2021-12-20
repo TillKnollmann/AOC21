@@ -3,6 +3,8 @@ import numpy as np
 import time
 import pprint
 
+from tqdm import tqdm
+
 from importlib.machinery import SourceFileLoader
 
 lib = SourceFileLoader("lib", "lib.py").load_module()
@@ -17,18 +19,120 @@ path = ""
 def parseInput(input):
     result = None
 
-    # Todo Input parsing
+    # get image enhancement algorithm
+    img_enh_algo = ""
+    # get image
+    img = []
+    is_img = False
+    for line in input:
+        current_line = line.replace("\n", "").strip()
+        if len(current_line) == 0:
+            is_img = True
+        elif not is_img:
+            img_enh_algo += current_line
+        else:
+            img.append(current_line)
 
-    return result
+    # convert the algo to a 0,1 string
+    img_enh_algo = tuple(
+        [1 if img_enh_algo[i] == "#" else 0 for i in range(len(img_enh_algo))]
+    )
+
+    # convert the image to a 0,1 matrix
+    init_img = np.zeros((len(img) + 2, len(img[0]) + 2), dtype=np.int8)
+    for i in range(len(img)):
+        for j in range(len(img[i])):
+            if img[i][j] == "#":
+                init_img[i + 1][j + 1] = 1
+
+    return img_enh_algo, init_img
+
+
+def apply_img_enh_algo_on(img_enh_alg: tuple, img: np.array, position: tuple) -> str:
+    """Applies the image enhancement algorithm at the position to the image and returns the resulting string
+
+    Args:
+        img_enh_alg (tuple): The image enhancement algorithm
+        img (np.array): The image
+        position (tuple): The position
+
+    Returns:
+        str: The resulting character
+    """
+
+    sub_img = (
+        img[position[0] - 1 : position[0] + 2, position[1] - 1 : position[1] + 2]
+    ).reshape(-1)
+    bin_value = "".join([str(sub_img[i]) for i in range(len(sub_img))])
+    int_value = int(bin_value, 2)
+    return img_enh_alg[int_value]
+
+
+def apply_img_enh_algo(img_enh_algo: tuple, img: np.array, infty_ext: int) -> np.array:
+    """Applies the image enhancement algorithm and returns the new image
+
+    Args:
+        img_enh_algo (tuple): The algorithm
+        img (np.array): The current image
+
+    Returns:
+        np.array: The resulting image
+    """
+    # extend original image
+    img_ext = np.zeros((len(img) + 4, len(img[0]) + 4), dtype=np.int8)
+    # flush infinity extension
+    img_ext = img_ext + infty_ext
+    # embed original image
+    img_ext[2 : len(img_ext) - 2, 2 : len(img_ext[0]) - 2] = img
+
+    # fill calculated pixels
+    res_img = np.zeros((len(img) + 4, len(img[0]) + 4), dtype=np.int8)
+    for i in range(1, len(res_img) - 1):
+        for j in range(1, len(res_img[i]) - 1):
+            res_img[i][j] = apply_img_enh_algo_on(img_enh_algo, img_ext, (i, j))
+
+    # calculate how the pixels in infinity extension look like
+    infty_ext_new = img_enh_algo[int("".join([str(infty_ext) for i in range(9)]), 2)]
+
+    # fill border
+    for i in range(len(res_img)):
+        res_img[i, 0] = infty_ext_new
+        res_img[i, len(res_img) - 1] = infty_ext_new
+    for j in range(len(res_img[0])):
+        res_img[0, j] = infty_ext_new
+        res_img[len(res_img) - 1, j] = infty_ext_new
+
+    return res_img, infty_ext_new
+
+
+def print_img(img: np.array):
+    """Prints the image with # (one) and _ (zero)
+
+    Args:
+        img (np.array): The image to be printed
+    """
+    complete = ""
+    for line in img:
+        out = ""
+        for elem in line:
+            out += "#" if elem > 0 else "_"
+        complete += out + "\n"
+    print(complete)
 
 
 def part1(data, measure=False):
     startTime = time.time()
     result_1 = None
 
-    input = parseInput(data)
+    img_enh_algo, init_img = parseInput(data)
 
-    # Todo program part 1
+    img = init_img.copy()
+    infty_ext = 0
+
+    for i in range(2):
+        img, infty_ext = apply_img_enh_algo(img_enh_algo, img, infty_ext)
+
+    result_1 = int(np.sum(img))
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
@@ -40,9 +144,17 @@ def part2(data, measure=False):
     startTime = time.time()
     result_2 = None
 
-    input = parseInput(data)
+    img_enh_algo, init_img = parseInput(data)
 
-    # Todo program part 2
+    img = init_img.copy()
+    infty_ext = 0
+
+    print("\nProcessing image")
+
+    for i in tqdm(range(50)):
+        img, infty_ext = apply_img_enh_algo(img_enh_algo, img, infty_ext)
+
+    result_2 = int(np.sum(img))
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
@@ -87,12 +199,12 @@ def main():
     global path
     path = "Day " + str(day) + "/"
 
-    test_sol = []  # Todo put in test solutions
+    test_sol = [35, 3351]  # Todo put in test solutions
 
     test = True  # Todo
 
-    sol1 = sub1 = False  # Todo
-    sol2 = sub2 = False  # Todo
+    sol1 = sub1 = True  # Todo
+    sol2 = sub2 = True  # Todo
 
     if test:
         if not runTests(test_sol, path):
