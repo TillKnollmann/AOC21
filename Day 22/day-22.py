@@ -15,20 +15,101 @@ path = ""
 
 
 def parseInput(input):
-    result = None
+    result = []
 
-    # Todo Input parsing
+    min_x = min_y = min_z = 0
+    max_x = max_y = max_z = 0
 
-    return result
+    for line in input:
+        current_line = line.replace("\n", "").strip().split(" ")
+        command = current_line[0]
+        ranges = current_line[1].split(",")
+        range_x = None
+        range_y = None
+        range_z = None
+        for range in ranges:
+            values = range[2:].split("..")
+            values = tuple([int(x) for x in values])
+            if range[0] == "x":
+                range_x = values
+                min_x = min(min_x, min(values))
+                max_x = max(max_x, max(values))
+            elif range[0] == "y":
+                range_y = values
+                min_y = min(min_y, min(values))
+                max_y = max(max_y, max(values))
+            elif range[0] == "z":
+                range_z = values
+                min_z = min(min_z, min(values))
+                max_z = max(max_z, max(values))
+        result.append((command, range_x, range_y, range_z))
+
+    return result, (min_x, max_x), (min_y, max_y), (min_z, max_z)
+
+
+def process_command(
+    command: tuple, cores: np.array, offset_x: int, offset_y: int, offset_z: int
+) -> np.array:
+
+    # print(command)
+    # print(offset_x)
+    # print(offset_y)
+    # print(offset_z)
+
+    # prepare array
+    applier = np.zeros(
+        (
+            command[1][1] - command[1][0] + 1,
+            command[2][1] - command[2][0] + 1,
+            command[3][1] - command[3][0] + 1,
+        ),
+        dtype=np.int8,
+    )
+    if command[0] == "on":
+        applier = applier + 1
+
+    # apply array on cores
+    cores[
+        offset_x + command[1][0] : offset_x + command[1][1] + 1,
+        offset_y + command[2][0] : offset_y + command[2][1] + 1,
+        offset_z + command[3][0] : offset_z + command[3][1] + 1,
+    ] = applier
+
+    # normalize cores
+    # cores[cores > 1] = 1
+
+    return cores
 
 
 def part1(data, measure=False):
     startTime = time.time()
     result_1 = None
 
-    input = parseInput(data)
+    commands, x_range, y_range, z_range = parseInput(data)
 
-    # Todo program part 1
+    offset_x = -x_range[0]
+    offset_y = -y_range[0]
+    offset_z = -z_range[0]
+
+    cores = np.zeros(
+        (
+            x_range[1] + offset_x + 1,
+            y_range[1] + offset_y + 1,
+            z_range[1] + offset_z + 1,
+        ),
+        dtype=np.int8,
+    )
+
+    for command in commands:
+        cores = process_command(command, cores, offset_x, offset_y, offset_z)
+
+    result_1 = np.sum(
+        cores[
+            -50 + offset_x : 50 + offset_x + 1,
+            -50 + offset_y : 50 + offset_y + 1,
+            -50 + offset_z : 50 + offset_z + 1,
+        ]
+    )
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
@@ -87,7 +168,7 @@ def main():
     global path
     path = "Day " + str(day) + "/"
 
-    test_sol = []  # Todo put in test solutions
+    test_sol = [39, 590784]  # Todo put in test solutions
 
     test = True  # Todo
 
