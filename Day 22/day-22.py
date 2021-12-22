@@ -138,14 +138,7 @@ def apply_command(command: tuple, lamps_on: set) -> set:
     return lamps_on
 
 
-def part1(data, measure=False):
-    startTime = time.time()
-    result_1 = None
-
-    commands, x_range, y_range, z_range = parseInput(data)
-
-    area = ((-50, 50), (-50, 50), (-50, 50))
-
+def get_on_lamps_in_area(commands: tuple, area: tuple):
     offset_x = -area[0][0]
     offset_y = -area[1][0]
     offset_z = -area[2][0]
@@ -162,7 +155,18 @@ def part1(data, measure=False):
     for command in commands:
         cores = process_command(command, cores, offset_x, offset_y, offset_z, area)
 
-    result_1 = np.sum(cores)
+    return np.sum(cores)
+
+
+def part1(data, measure=False):
+    startTime = time.time()
+    result_1 = None
+
+    commands, x_range, y_range, z_range = parseInput(data)
+
+    area = ((-50, 50), (-50, 50), (-50, 50))
+
+    result_1 = get_on_lamps_in_area(commands, area)
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
