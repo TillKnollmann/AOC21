@@ -50,35 +50,50 @@ def part2(data, measure=False):
     return result_2
 
 
-def runTests(test_sol, path):
-    test_res = []
+def runTests(test_sol_1, test_sol_2, path):
+    test_res_1 = []
+    test_res_2 = []
 
     all_check = True
 
     paths = lib.getTestPaths(path)
 
-    test_res += list(map(part1, map(lib.getDataLines, paths)))
-    test_res += list(map(part2, map(lib.getDataLines, paths)))
+    test_res_1 += list(map(part1, map(lib.getDataLines, paths)))
+    test_res_2 += list(map(part2, map(lib.getDataLines, paths)))
 
-    success = [test_sol[i] == test_res[i] for i in range(len(test_sol))]
+    success_1 = [(test_sol_1[i] == test_res_1[i]) for i in range(len(test_sol_1))]
+    success_2 = [
+        "Part 2 Test " + str(i + 1) + " " + (test_sol_2[i] == test_res_2[i])
+        for i in range(len(test_sol_2))
+    ]
 
-    for i in range(len(test_sol)):
-        output = "Test " + str(i + 1)
-        output = (
-            "".join([output, " Success!"])
-            if test_sol[i] == test_res[i]
-            else "".join(
-                [
-                    output,
-                    " Failed! Expected ",
-                    str(test_sol[i]),
-                    " received ",
-                    str(test_res[i]),
-                ]
+    for i in range(len(test_sol_1)):
+        if success_1[i]:
+            print("Part 1 Test " + str(i + 1) + " Succeeded!")
+        else:
+            print(
+                "Part 1 Test "
+                + str(i + 1)
+                + " Failed! Expected "
+                + str(test_sol_1[i])
+                + " received "
+                + test_res_1[i]
             )
-        )
-        all_check = False if test_sol[i] != test_res[i] else all_check
-        print(output)
+            all_check = False
+
+    for i in range(len(test_sol_2)):
+        if success_2[i]:
+            print("Part 2 Test " + str(i + 1) + " Succeeded!")
+        else:
+            print(
+                "Part 2 Test "
+                + str(i + 1)
+                + " Failed! Expected "
+                + str(test_sol_2[i])
+                + " received "
+                + test_res_2[i]
+            )
+            all_check = False
 
     return all_check
 
@@ -87,7 +102,8 @@ def main():
     global path
     path = "Day " + str(day) + "/"
 
-    test_sol = []  # Todo put in test solutions
+    test_sol_1 = []  # Todo put in test solutions part 1
+    test_sol_2 = []  # Todo put in test solutions part 2
 
     test = True  # Todo
 
@@ -95,7 +111,7 @@ def main():
     sol2 = sub2 = False  # Todo
 
     if test:
-        if not runTests(test_sol, path):
+        if not runTests(test_sol_1, test_sol_2, path):
             sub1 = sub2 = False
 
     data_main = get_data(day=day, year=2021).splitlines()

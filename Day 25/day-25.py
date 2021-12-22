@@ -10,7 +10,7 @@ lib = SourceFileLoader("lib", "lib.py").load_module()
 from aocd import get_data
 from aocd import submit
 
-day = DAY
+day = 25
 path = ""
 
 

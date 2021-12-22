@@ -23,7 +23,7 @@ def getTemplateCode(day):
 def main():
     path = os.getcwd()
     template_path = os.path.join(path, "Template")
-    for i in range(1, 25):
+    for i in range(1, 26):
         current_path = os.path.join(path, "Day " + str(i))
         if not os.path.exists(current_path):
             shutil.copytree(template_path, current_path)
