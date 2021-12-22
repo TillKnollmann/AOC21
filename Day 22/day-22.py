@@ -4,6 +4,8 @@ import numpy as np
 import time
 import pprint
 
+from copy import deepcopy
+
 from tqdm import tqdm
 
 from importlib.machinery import SourceFileLoader
@@ -18,18 +20,29 @@ path = ""
 
 
 def parseInput(input):
+    """Parses the input and returns a list of commands that contain the ranges
+
+    Args:
+        input (list): List of strings
+
+    Returns:
+        list: List of commands
+    """
     result = []
 
+    # calculate area in which commands apply
     min_x = min_y = min_z = 0
     max_x = max_y = max_z = 0
 
     for line in input:
         current_line = line.replace("\n", "").strip().split(" ")
+        # get command
         command = current_line[0]
         ranges = current_line[1].split(",")
         range_x = None
         range_y = None
         range_z = None
+        # get ranges
         for range in ranges:
             values = range[2:].split("..")
             values = tuple([int(x) for x in values])
@@ -58,7 +71,20 @@ def process_command(
     offset_z: int,
     area: tuple,
 ) -> np.array:
+    """Processes a command on a core array with the given offsets within the given area
 
+    Args:
+        command (tuple): The command
+        cores (np.array): The cores on which we work
+        offset_x (int): The offset in x direction
+        offset_y (int): The offset in y direction
+        offset_z (int): The offset in z direction
+        area (tuple): The area which we only consider for commands
+
+    Returns:
+        np.array: The resulting core array
+    """
+    # if the command applies outside of the area, do nothing
     if (
         command[1][1] < area[0][0]
         or command[2][1] < area[1][0]
@@ -72,6 +98,7 @@ def process_command(
     ):
         return cores
 
+    # get the bounds of the command mapped by the offsets
     new_bounds = [
         (
             max(0, command[1][0] + offset_x),
@@ -86,10 +113,6 @@ def process_command(
             min(area[2][1] + offset_z, command[3][1] + offset_z),
         ),
     ]
-
-    # print(command)
-
-    # print(new_bounds)
 
     # prepare array
     applier = np.zeros(
@@ -110,41 +133,26 @@ def process_command(
         new_bounds[2][0] : new_bounds[2][1] + 1,
     ] = applier
 
-    # normalize cores
-    # cores[cores > 1] = 1
-
     return cores
 
 
-def apply_command(command: tuple, lamps_on: set) -> set:
-    if command[0] == "on":
-        points = set(
-            [
-                (x, y, z)
-                for x in range(command[1][0], command[1][1] + 1)
-                for y in range(command[2][0], command[2][1] + 1)
-                for z in range(command[3][0], command[3][1] + 1)
-            ]
-        )
-        lamps_on = lamps_on.union(points)
-    elif command == "off":
-        points = set(
-            [
-                (x, y, z)
-                for x in range(command[1][0], command[1][1] + 1)
-                for y in range(command[2][0], command[2][1] + 1)
-                for z in range(command[3][0], command[3][1] + 1)
-            ]
-        )
-        lamps_on = lamps_on - points
-    return lamps_on
-
-
 def get_on_lamps_in_area(commands: tuple, area: tuple):
+    """Process all commands and get the number of lamps which are on in the given area
+
+    Args:
+        commands (tuple): The commands
+        area (tuple): The area of interest
+
+    Returns:
+        int: The number of lamps which are on in the given area after applying the commands
+    """
+
+    # calculate offsets
     offset_x = -area[0][0]
     offset_y = -area[1][0]
     offset_z = -area[2][0]
 
+    # generate set of cores of interest
     cores = np.zeros(
         (
             area[0][1] + offset_x + 1,
@@ -154,10 +162,27 @@ def get_on_lamps_in_area(commands: tuple, area: tuple):
         dtype=np.int8,
     )
 
+    # apply the commands
     for command in commands:
         cores = process_command(command, cores, offset_x, offset_y, offset_z, area)
 
     return np.sum(cores)
+
+
+def get_volume(cube: tuple) -> int:
+    """Returns the volume of a given cube
+
+    Args:
+        cube (tuple): A 3D cube
+
+    Returns:
+        int: The volume of the cube
+    """
+    return int(
+        (cube[0][1] - cube[0][0] + 1)
+        * (cube[1][1] - cube[1][0] + 1)
+        * (cube[2][1] - cube[2][0] + 1)
+    )
 
 
 def part1(data, measure=False):
@@ -166,8 +191,10 @@ def part1(data, measure=False):
 
     commands, x_range, y_range, z_range = parseInput(data)
 
+    # define the area
     area = ((-50, 50), (-50, 50), (-50, 50))
 
+    # process on the given area
     result_1 = get_on_lamps_in_area(commands, area)
 
     executionTime = round(time.time() - startTime, 2)
@@ -182,7 +209,110 @@ def part2(data, measure=False):
 
     commands, x_range, y_range, z_range = parseInput(data)
 
-    # Todo program part 2
+    # contains cubes where all lamps are on
+    cubes = []
+
+    bar = None
+
+    if measure:
+        bar = tqdm(total=len(commands))
+
+    for command in commands:
+        # get the cube of the command
+        new_cube = command[1:]
+        # print(new_cube)
+        cubes_processed = []
+        for cube in cubes:
+            # check if there is an intersection
+            if not (
+                new_cube[0][1] < cube[0][0]
+                or new_cube[0][0] > cube[0][1]
+                or new_cube[1][1] < cube[1][0]
+                or new_cube[1][0] > cube[1][1]
+                or new_cube[2][1] < cube[2][0]
+                or new_cube[2][0] > cube[2][1]
+            ):
+                # remove intersection and split the old cube
+                intersection = (
+                    (max(new_cube[0][0], cube[0][0]), min(new_cube[0][1], cube[0][1]),),
+                    (max(new_cube[1][0], cube[1][0]), min(new_cube[1][1], cube[1][1]),),
+                    (max(new_cube[2][0], cube[2][0]), min(new_cube[2][1], cube[2][1]),),
+                )
+                """ print(
+                    "Cube "
+                    + str(new_cube)
+                    + " and "
+                    + str(cube)
+                    + " intersect in "
+                    + str(intersection)
+                ) """
+                # get remaining fractions of the cube
+                if cube[0][0] < intersection[0][0]:
+                    cubes_processed.append(
+                        (
+                            (cube[0][0], intersection[0][0] - 1),
+                            (cube[1][0], cube[1][1]),
+                            (cube[2][0], cube[2][1]),
+                        )
+                    )
+                if intersection[0][1] < cube[0][1]:
+                    cubes_processed.append(
+                        (
+                            (intersection[0][1] + 1, cube[0][1]),
+                            (cube[1][0], cube[1][1]),
+                            (cube[2][0], cube[2][1]),
+                        )
+                    )
+                if cube[1][0] < intersection[1][0]:
+                    cubes_processed.append(
+                        (
+                            (intersection[0][0], intersection[0][1]),
+                            (cube[1][0], intersection[1][0] - 1),
+                            (cube[2][0], cube[2][1]),
+                        )
+                    )
+                if intersection[1][1] < cube[1][1]:
+                    cubes_processed.append(
+                        (
+                            (intersection[0][0], intersection[0][1]),
+                            (intersection[1][1] + 1, cube[1][1]),
+                            (cube[2][0], cube[2][1]),
+                        )
+                    )
+                if cube[2][0] < intersection[2][0]:
+                    cubes_processed.append(
+                        (
+                            (intersection[0][0], intersection[0][1]),
+                            (intersection[1][0], intersection[1][1]),
+                            (cube[2][0], intersection[2][0] - 1),
+                        )
+                    )
+                if intersection[2][1] < cube[2][1]:
+                    cubes_processed.append(
+                        (
+                            (intersection[0][0], intersection[0][1]),
+                            (intersection[1][0], intersection[1][1]),
+                            (intersection[2][1] + 1, cube[2][1]),
+                        )
+                    )
+            else:
+                # the cube was intersection free
+                cubes_processed.append(cube)
+
+        if command[0] == "on":
+            # add the current cube
+            cubes_processed.append(new_cube)
+        cubes = deepcopy(cubes_processed)
+        if bar:
+            bar.update(1)
+
+    if bar:
+        bar.close()
+
+    # calculate total volume of all cubes (equals the lamps which are on since all cubes are disjoint)
+    result_2 = 0
+    for cube in cubes:
+        result_2 += get_volume(cube)
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
@@ -232,7 +362,7 @@ def main():
     test = True  # Todo
 
     sol1 = sub1 = True  # Todo
-    sol2 = sub2 = False  # Todo
+    sol2 = sub2 = True  # Todo
 
     if test:
         if not runTests(test_sol, path):
