@@ -49,18 +49,40 @@ def parseInput(input):
 
 
 def process_command(
-    command: tuple, cores: np.array, offset_x: int, offset_y: int, offset_z: int
+    command: tuple,
+    cores: np.array,
+    offset_x: int,
+    offset_y: int,
+    offset_z: int,
+    area: tuple,
 ) -> np.array:
 
-    if command[1][1] < -50 or command[2][1] < -50 or command[3][1] < -50:
+    if (
+        command[1][1] < area[0][0]
+        or command[2][1] < area[1][0]
+        or command[3][1] < area[2][0]
+    ):
         return cores
-    if command[1][0] > 50 or command[2][0] > 50 or command[3][0] > 50:
+    if (
+        command[1][0] > area[0][1]
+        or command[2][0] > area[1][1]
+        or command[3][0] > area[2][1]
+    ):
         return cores
 
     new_bounds = [
-        (max(0, command[1][0] + offset_x), min(100, command[1][1] + offset_x,)),
-        (max(0, command[2][0] + offset_y), min(100, command[2][1] + offset_y)),
-        (max(0, command[3][0] + offset_z), min(100, command[3][1] + offset_z)),
+        (
+            max(0, command[1][0] + offset_x),
+            min(area[0][1] + offset_x, command[1][1] + offset_x,),
+        ),
+        (
+            max(0, command[2][0] + offset_y),
+            min(area[1][1] + offset_y, command[2][1] + offset_y),
+        ),
+        (
+            max(0, command[3][0] + offset_z),
+            min(area[2][1] + offset_z, command[3][1] + offset_z),
+        ),
     ]
 
     # print(command)
@@ -122,23 +144,23 @@ def part1(data, measure=False):
 
     commands, x_range, y_range, z_range = parseInput(data)
 
-    # lamps_on = set()
+    area = ((-50, 50), (-50, 50), (-50, 50))
 
-    # for command in commands:
-    #    lamps_on = apply_command(command, lamps_on)
-
-    # result_1 = len(lamps_on)
-
-    offset_x = 50
-    offset_y = 50
-    offset_z = 50
+    offset_x = -area[0][0]
+    offset_y = -area[1][0]
+    offset_z = -area[2][0]
 
     cores = np.zeros(
-        (50 + offset_x + 1, 50 + offset_y + 1, 50 + offset_z + 1,), dtype=np.int8,
+        (
+            area[0][1] + offset_x + 1,
+            area[1][1] + offset_y + 1,
+            area[2][1] + offset_z + 1,
+        ),
+        dtype=np.int8,
     )
 
     for command in commands:
-        cores = process_command(command, cores, offset_x, offset_y, offset_z)
+        cores = process_command(command, cores, offset_x, offset_y, offset_z, area)
 
     result_1 = np.sum(cores)
 
@@ -152,7 +174,7 @@ def part2(data, measure=False):
     startTime = time.time()
     result_2 = None
 
-    input = parseInput(data)
+    commands, x_range, y_range, z_range = parseInput(data)
 
     # Todo program part 2
 
@@ -209,6 +231,20 @@ def main():
     if test:
         if not runTests(test_sol, path):
             sub1 = sub2 = False
+
+    # run test for part 2
+    test_data = lib.getDataLines(path + "test3.txt")
+    test_res = part2(test_data)
+    if test_res != 2758514936282235:
+        print(
+            "Test for part 2 failed! Expected: "
+            + str(2758514936282235)
+            + " received "
+            + str(test_res)
+        )
+        sub2 = False
+    else:
+        print("Test for part 2 succeeded!")
 
     data_main = get_data(day=day, year=2021).splitlines()
 
