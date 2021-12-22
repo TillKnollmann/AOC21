@@ -4,6 +4,8 @@ import numpy as np
 import time
 import pprint
 
+from tqdm import tqdm
+
 from importlib.machinery import SourceFileLoader
 
 lib = SourceFileLoader("lib", "lib.py").load_module()
@@ -196,7 +198,7 @@ def runTests(test_sol, path):
     paths = lib.getTestPaths(path)
 
     test_res += list(map(part1, map(lib.getDataLines, paths)))
-    test_res += list(map(part2, map(lib.getDataLines, paths)))
+    # test_res += list(map(part2, map(lib.getDataLines, paths)))
 
     success = [test_sol[i] == test_res[i] for i in range(len(test_sol))]
 
