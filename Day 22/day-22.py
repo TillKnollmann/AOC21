@@ -1,4 +1,5 @@
 from datetime import date
+from typing import ChainMap
 import numpy as np
 import time
 import pprint
@@ -51,17 +52,27 @@ def process_command(
     command: tuple, cores: np.array, offset_x: int, offset_y: int, offset_z: int
 ) -> np.array:
 
+    if command[1][1] < -50 or command[2][1] < -50 or command[3][1] < -50:
+        return cores
+    if command[1][0] > 50 or command[2][0] > 50 or command[3][0] > 50:
+        return cores
+
+    new_bounds = [
+        (max(0, command[1][0] + offset_x), min(100, command[1][1] + offset_x,)),
+        (max(0, command[2][0] + offset_y), min(100, command[2][1] + offset_y)),
+        (max(0, command[3][0] + offset_z), min(100, command[3][1] + offset_z)),
+    ]
+
     # print(command)
-    # print(offset_x)
-    # print(offset_y)
-    # print(offset_z)
+
+    # print(new_bounds)
 
     # prepare array
     applier = np.zeros(
         (
-            command[1][1] - command[1][0] + 1,
-            command[2][1] - command[2][0] + 1,
-            command[3][1] - command[3][0] + 1,
+            new_bounds[0][1] - new_bounds[0][0] + 1,
+            new_bounds[1][1] - new_bounds[1][0] + 1,
+            new_bounds[2][1] - new_bounds[2][0] + 1,
         ),
         dtype=np.int8,
     )
@@ -70,9 +81,9 @@ def process_command(
 
     # apply array on cores
     cores[
-        offset_x + command[1][0] : offset_x + command[1][1] + 1,
-        offset_y + command[2][0] : offset_y + command[2][1] + 1,
-        offset_z + command[3][0] : offset_z + command[3][1] + 1,
+        new_bounds[0][0] : new_bounds[0][1] + 1,
+        new_bounds[1][0] : new_bounds[1][1] + 1,
+        new_bounds[2][0] : new_bounds[2][1] + 1,
     ] = applier
 
     # normalize cores
@@ -81,35 +92,55 @@ def process_command(
     return cores
 
 
+def apply_command(command: tuple, lamps_on: set) -> set:
+    if command[0] == "on":
+        points = set(
+            [
+                (x, y, z)
+                for x in range(command[1][0], command[1][1] + 1)
+                for y in range(command[2][0], command[2][1] + 1)
+                for z in range(command[3][0], command[3][1] + 1)
+            ]
+        )
+        lamps_on = lamps_on.union(points)
+    elif command == "off":
+        points = set(
+            [
+                (x, y, z)
+                for x in range(command[1][0], command[1][1] + 1)
+                for y in range(command[2][0], command[2][1] + 1)
+                for z in range(command[3][0], command[3][1] + 1)
+            ]
+        )
+        lamps_on = lamps_on - points
+    return lamps_on
+
+
 def part1(data, measure=False):
     startTime = time.time()
     result_1 = None
 
     commands, x_range, y_range, z_range = parseInput(data)
 
-    offset_x = -x_range[0]
-    offset_y = -y_range[0]
-    offset_z = -z_range[0]
+    # lamps_on = set()
+
+    # for command in commands:
+    #    lamps_on = apply_command(command, lamps_on)
+
+    # result_1 = len(lamps_on)
+
+    offset_x = 50
+    offset_y = 50
+    offset_z = 50
 
     cores = np.zeros(
-        (
-            x_range[1] + offset_x + 1,
-            y_range[1] + offset_y + 1,
-            z_range[1] + offset_z + 1,
-        ),
-        dtype=np.int8,
+        (50 + offset_x + 1, 50 + offset_y + 1, 50 + offset_z + 1,), dtype=np.int8,
     )
 
     for command in commands:
         cores = process_command(command, cores, offset_x, offset_y, offset_z)
 
-    result_1 = np.sum(
-        cores[
-            -50 + offset_x : 50 + offset_x + 1,
-            -50 + offset_y : 50 + offset_y + 1,
-            -50 + offset_z : 50 + offset_z + 1,
-        ]
-    )
+    result_1 = np.sum(cores)
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
@@ -172,7 +203,7 @@ def main():
 
     test = True  # Todo
 
-    sol1 = sub1 = False  # Todo
+    sol1 = sub1 = True  # Todo
     sol2 = sub2 = False  # Todo
 
     if test:
