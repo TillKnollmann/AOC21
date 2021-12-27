@@ -104,16 +104,18 @@ def part1(data, measure=False):
     result_1 = None
 
     instructions = parseInput(data)
-
-    start = 99999999999999
+    # solution 65984919997939
+    start = 65984919997939
     w, x, y, z = run_instructions(instructions, int(start))
-    while z != 0:
-        start -= 1
-        if not "0" in str(start):
-            print("Testing " + str(start))
-            w, x, y, z = run_instructions(instructions, int(start))
+    print(z)
+    # while z != 0:
+    #    start -= 1
+    #    if not "0" in str(start):
+    #        print("Testing " + str(start))
+    #        w, x, y, z = run_instructions(instructions, int(start))
 
-    result_1 = start
+    if z == 0:
+        result_1 = start
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
@@ -125,7 +127,15 @@ def part2(data, measure=False):
     startTime = time.time()
     result_2 = None
 
-    input = parseInput(data)
+    instructions = parseInput(data)
+
+    # solution part 2
+    start = 11211619541713
+    w, x, y, z = run_instructions(instructions, int(start))
+    print(z)
+
+    if z == 0:
+        result_2 = start
 
     # Todo program part 2
 
@@ -193,9 +203,7 @@ def main():
     test = False  # Todo
 
     sol1 = sub1 = True  # Todo
-    sol2 = sub2 = False  # Todo
-
-    sub1 = True
+    sol2 = sub2 = True  # Todo
 
     if test:
         if not runTests(test_sol_1, test_sol_2, path):
