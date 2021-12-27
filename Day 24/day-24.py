@@ -25,24 +25,24 @@ def initialize():
     values = {"w": 0, "x": 0, "y": 0, "z": 0}
 
 
-def inp(a: str, value):
+def inp(a: str, value: str):
     global values
     values[a] = int(value)
 
 
-def add(a, b):
+def add(a: str, b: str):
     global values
     value_b = int(b) if b.lstrip("-").isdigit() else values[b]
     values[a] = values[a] + value_b
 
 
-def mul(a, b):
+def mul(a: str, b: str):
     global values
     value_b = int(b) if b.lstrip("-").isdigit() else values[b]
     values[a] = values[a] * value_b
 
 
-def div(a, b):
+def div(a: str, b: str):
     global values
     value_b = int(b) if b.lstrip("-").isdigit() else values[b]
     if value_b == 0:
@@ -50,13 +50,13 @@ def div(a, b):
     values[a] = math.floor(values[a] / float(value_b))
 
 
-def mod(a, b):
+def mod(a: str, b: str):
     global values
     value_b = int(b) if b.lstrip("-").isdigit() else values[b]
     values[a] = values[a] % value_b
 
 
-def eql(a, b):
+def eql(a: str, b: str):
     global values
     value_b = int(b) if b.lstrip("-").isdigit() else values[b]
     values[a] = int(values[a] == value_b)
@@ -109,7 +109,9 @@ def part1(data, measure=False):
     w, x, y, z = run_instructions(instructions, int(start))
     while z != 0:
         start -= 1
-        w, x, y, z = run_instructions(instructions, int(start))
+        if not "0" in str(start):
+            print("Testing " + str(start))
+            w, x, y, z = run_instructions(instructions, int(start))
 
     result_1 = start
 
