@@ -15,20 +15,65 @@ path = ""
 
 
 def parseInput(input):
-    result = None
+    result = []
 
-    # Todo Input parsing
+    for line in input:
+        current_line = line.replace("\n", "").strip()
+        result.append([char for char in current_line])
 
-    return result
+    array = np.array(result)
+
+    return array
+
+
+def simulate_step(sea_cucumbers):
+
+    progress = False
+
+    new_sea_cucumbers = sea_cucumbers.copy()
+    # east facing
+    for i in range(len(sea_cucumbers)):
+        for j in range(len(sea_cucumbers[i])):
+            if sea_cucumbers[i, j] == ">":
+                # get neighbor
+                neigh_i = i
+                neigh_j = j + 1 if j < len(sea_cucumbers[i]) - 1 else 0
+                if sea_cucumbers[neigh_i, neigh_j] == ".":
+                    new_sea_cucumbers[neigh_i, neigh_j] = ">"
+                    new_sea_cucumbers[i, j] = "."
+                    progress = True
+
+    new_new_sea_cucumbers = new_sea_cucumbers.copy()
+
+    for i in range(len(new_sea_cucumbers)):
+        for j in range(len(new_sea_cucumbers[i])):
+            if new_sea_cucumbers[i, j] == "v":
+                # get neighbor
+                neigh_i = i + 1 if i < len(new_sea_cucumbers) - 1 else 0
+                neigh_j = j
+                if new_sea_cucumbers[neigh_i, neigh_j] == ".":
+                    new_new_sea_cucumbers[neigh_i, neigh_j] = "v"
+                    new_new_sea_cucumbers[i, j] = "."
+                    progress = True
+
+    return new_new_sea_cucumbers.copy(), progress
 
 
 def part1(data, measure=False):
     startTime = time.time()
     result_1 = None
 
-    input = parseInput(data)
+    sea_cucumbers = parseInput(data)
 
-    # Todo program part 1
+    sea_cucumbers, progress = simulate_step(sea_cucumbers)
+
+    counter = 1
+
+    while progress:
+        sea_cucumbers, progress = simulate_step(sea_cucumbers)
+        counter += 1
+
+    result_1 = counter
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
@@ -102,12 +147,12 @@ def main():
     global path
     path = "Day " + str(day) + "/"
 
-    test_sol_1 = []  # Todo put in test solutions part 1
+    test_sol_1 = [58]  # Todo put in test solutions part 1
     test_sol_2 = []  # Todo put in test solutions part 2
 
     test = True  # Todo
 
-    sol1 = sub1 = False  # Todo
+    sol1 = sub1 = True  # Todo
     sol2 = sub2 = False  # Todo
 
     if test:

@@ -2,6 +2,9 @@ from datetime import date
 import numpy as np
 import time
 import pprint
+import math
+
+from tqdm import tqdm
 
 from importlib.machinery import SourceFileLoader
 
@@ -14,21 +17,101 @@ day = 24
 path = ""
 
 
+values = {}
+
+
+def initialize():
+    global values
+    values = {"w": 0, "x": 0, "y": 0, "z": 0}
+
+
+def inp(a: str, value):
+    global values
+    values[a] = int(value)
+
+
+def add(a, b):
+    global values
+    value_b = int(b) if b.lstrip("-").isdigit() else values[b]
+    values[a] = values[a] + value_b
+
+
+def mul(a, b):
+    global values
+    value_b = int(b) if b.lstrip("-").isdigit() else values[b]
+    values[a] = values[a] * value_b
+
+
+def div(a, b):
+    global values
+    value_b = int(b) if b.lstrip("-").isdigit() else values[b]
+    if value_b == 0:
+        raise Exception("Dividing by zero!")
+    values[a] = math.floor(values[a] / float(value_b))
+
+
+def mod(a, b):
+    global values
+    value_b = int(b) if b.lstrip("-").isdigit() else values[b]
+    values[a] = values[a] % value_b
+
+
+def eql(a, b):
+    global values
+    value_b = int(b) if b.lstrip("-").isdigit() else values[b]
+    values[a] = int(values[a] == value_b)
+
+
+def run_instructions(instructions, number):
+
+    number = str(number)
+
+    initialize()
+    for instr in instructions:
+        if instr[0] == "inp":
+            inp(instr[1], number[0])
+            number = number[1:]
+        elif instr[0] == "add":
+            add(instr[1], instr[2])
+        elif instr[0] == "mul":
+            mul(instr[1], instr[2])
+        elif instr[0] == "div":
+            div(instr[1], instr[2])
+        elif instr[0] == "mod":
+            mod(instr[1], instr[2])
+        elif instr[0] == "eql":
+            eql(instr[1], instr[2])
+        else:
+            raise Exception("Unknown instruction " + str(instr))
+
+    return values["w"], values["x"], values["y"], values["z"]
+
+
 def parseInput(input):
-    result = None
+    result = []
 
-    # Todo Input parsing
+    for line in input:
+        current_line = line.replace("\n", "").strip()
+        result.append(tuple(current_line.split(" ")))
 
-    return result
+    return tuple(result)
 
 
 def part1(data, measure=False):
+    global cache
+
     startTime = time.time()
     result_1 = None
 
-    input = parseInput(data)
+    instructions = parseInput(data)
 
-    # Todo program part 1
+    start = 99999999999999
+    w, x, y, z = run_instructions(instructions, int(start))
+    while z != 0:
+        start -= 1
+        w, x, y, z = run_instructions(instructions, int(start))
+
+    result_1 = start
 
     executionTime = round(time.time() - startTime, 2)
     if measure:
@@ -105,16 +188,19 @@ def main():
     test_sol_1 = []  # Todo put in test solutions part 1
     test_sol_2 = []  # Todo put in test solutions part 2
 
-    test = True  # Todo
+    test = False  # Todo
 
-    sol1 = sub1 = False  # Todo
+    sol1 = sub1 = True  # Todo
     sol2 = sub2 = False  # Todo
+
+    sub1 = True
 
     if test:
         if not runTests(test_sol_1, test_sol_2, path):
             sub1 = sub2 = False
 
-    data_main = get_data(day=day, year=2021).splitlines()
+    # data_main = get_data(day=day, year=2021).splitlines()
+    data_main = lib.getDataLines(path + "/input_orig.txt")
 
     if sol1:
         result_1 = part1(data_main, True)
